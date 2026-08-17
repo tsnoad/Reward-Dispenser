@@ -1,0 +1,3 @@
+[submodule "OpenSCAD-Helper-Library"]
+	path = OpenSCAD-Helper-Library
+	url = https://github.com/tsnoad/OpenSCAD-Helper-Library.git

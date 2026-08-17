@@ -1,13 +1,14 @@
  
-include <../Shared Libraries/common_params_and_modules.scad>;
-include <../Shared Libraries/component_shared_modules.scad>;
-include <../Shared Libraries/component_esp32c3.scad>;
-include <../Shared Libraries/component_ddc612sa.scad>;
-include <../Shared Libraries/component_a4988.scad>;
-include <../Shared Libraries/component_stepper_nema17.scad>;
-include <../Shared Libraries/component_heatset_m3x5x5.scad>;
+include <OpenSCAD-Helper-Library/common_params_and_modules.scad>;
+include <OpenSCAD-Helper-Library/component_shared_modules.scad>;
+include <OpenSCAD-Helper-Library/component_heatset_m3x5x5.scad>;
 
-$fn = 144;
+include <components/component_esp32c3.scad>;
+include <components/component_ddc612sa.scad>;
+include <components/component_a4988.scad>;
+include <components/component_stepper_nema17.scad>;
+
+$fn = 36;
 //esp32c3();
 
 screw_type_selftap = 0; //M3 x 8mm countersunk self-tapping screw
