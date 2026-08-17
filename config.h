@@ -6,8 +6,8 @@
 
 // ─── AP (Hotspot) Settings ────────────────────────────────────────────────────
 #define AP_SSID            "SmartDevice-Setup"
-#define AP_PASSWORD        ""           // Leave empty for open AP
-#define AP_IP              "192.168.4.1"
+#define AP_PASSWORD        "smartdevice123"
+// #define AP_IP              "10.0.0.1" // this is actually hardcoded into WifiManager::startAP()
 
 // ─── NVS Storage Keys ─────────────────────────────────────────────────────────
 #define NVS_NAMESPACE      "device_cfg"

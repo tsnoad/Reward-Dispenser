@@ -3,6 +3,7 @@
 
 #include <WiFi.h>
 #include <Preferences.h>
+#include <ArduinoJson.h>
 
 namespace WiFiManager {
 
@@ -15,6 +16,10 @@ static Preferences _prefs;
 void startAP() {
   Serial.println("[WiFi] Starting AP: " AP_SSID);
   WiFi.mode(WIFI_AP_STA);
+  IPAddress local(10, 0, 0, 1);
+  IPAddress gateway(10, 0, 0, 1);
+  IPAddress subnet(255, 255, 255, 0);
+  WiFi.softAPConfig(local, gateway, subnet);
   WiFi.softAP(AP_SSID, strlen(AP_PASSWORD) > 0 ? AP_PASSWORD : nullptr);
   Serial.print("[WiFi] AP IP: ");
   Serial.println(WiFi.softAPIP());
@@ -75,16 +80,22 @@ bool isConnected() {
 
 String scanNetworksJSON() {
   int count = WiFi.scanNetworks();
-  String json = "[";
+
+  JsonDocument doc;
+  JsonArray arr = doc.to<JsonArray>();
+
   for (int i = 0; i < count; i++) {
-    if (i > 0) json += ",";
-    json += "{\"ssid\":\"" + WiFi.SSID(i) + "\","
-            "\"rssi\":"   + String(WiFi.RSSI(i)) + ","
-            "\"open\":"   + String(WiFi.encryptionType(i) == WIFI_AUTH_OPEN ? "true" : "false") + "}";
+    JsonObject net = arr.add<JsonObject>();
+    net["ssid"] = WiFi.SSID(i);
+    net["rssi"] = WiFi.RSSI(i);
+    net["open"] = WiFi.encryptionType(i) == WIFI_AUTH_OPEN;
   }
-  json += "]";
+
   WiFi.scanDelete();
-  return json;
+
+  String out;
+  serializeJson(doc, out);
+  return out;
 }
 
 } // namespace WiFiManager
