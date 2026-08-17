@@ -14,7 +14,7 @@ static Preferences _prefs;
 
 void startAP() {
   Serial.println("[WiFi] Starting AP: " AP_SSID);
-  WiFi.mode(WIFI_AP);
+  WiFi.mode(WIFI_AP_STA);
   WiFi.softAP(AP_SSID, strlen(AP_PASSWORD) > 0 ? AP_PASSWORD : nullptr);
   Serial.print("[WiFi] AP IP: ");
   Serial.println(WiFi.softAPIP());

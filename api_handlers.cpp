@@ -169,13 +169,16 @@ void wifiScan(WebServer& server) {
 
 void status(WebServer& server) {
   Serial.println("[API] GET /api/status");
+  String ssid, pass;
+  WiFiManager::loadCredentials(ssid, pass);
+
   JsonDocument doc;
   doc["ok"]                = true;
   doc["device"]            = DEVICE_NAME;
   doc["firmware"]          = FIRMWARE_VERSION;
   doc["wifi"]["connected"] = WiFiManager::isConnected();
   doc["wifi"]["ip"]        = WiFi.localIP().toString();
-  doc["wifi"]["ssid"]      = WiFi.SSID();
+  doc["wifi"]["ssid"]      = ssid;
   doc["uptime_ms"]         = millis();
 
   String out;

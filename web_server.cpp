@@ -217,20 +217,6 @@ static const char HTML_STYLE[] PROGMEM = R"rawhtml(</title>
     margin-top: 6px;
   }
 </style>
-</head><body>
-<div class="wordmark">
-  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-    <circle cx="9" cy="9" r="7" stroke="#e8a04a" stroke-width="1.5"/>
-    <path d="M9 5v4l2.5 2.5" stroke="#e8a04a" stroke-width="1.5" stroke-linecap="round"/>
-  </svg>
-  )rawhtml";
-
-// After wordmark text, close head structure
-static const char HTML_WORDMARK_CLOSE[] PROGMEM = R"rawhtml(
-</div>)rawhtml";
-
-static const char HTML_FOOT[] PROGMEM = R"rawhtml(
-<div id="toast" class="toast"></div>
 <script>
 function toast(msg, ok) {
   const t = document.getElementById('toast');
@@ -249,6 +235,20 @@ async function api(path, method, body) {
   } catch(e) { return { ok: false, error: e.message }; }
 }
 </script>
+</head><body>
+<div class="wordmark">
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <circle cx="9" cy="9" r="7" stroke="#e8a04a" stroke-width="1.5"/>
+    <path d="M9 5v4l2.5 2.5" stroke="#e8a04a" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+  )rawhtml";
+
+// After wordmark text, close head structure
+static const char HTML_WORDMARK_CLOSE[] PROGMEM = R"rawhtml(
+</div>)rawhtml";
+
+static const char HTML_FOOT[] PROGMEM = R"rawhtml(
+<div id="toast" class="toast"></div>
 </body></html>)rawhtml";
 
 // ─── Setup Page (AP mode) ──────────────────────────────────────────────────────
