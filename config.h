@@ -14,17 +14,13 @@
 #define NVS_KEY_SSID       "wifi_ssid"
 #define NVS_KEY_PASS       "wifi_pass"
 
-
-// ─── GPIO Pins ────────────────────────────────────────────────────────────────
-// #define PIN_DISPENSE       GPIO_NUM_3   // Change to your target GPIO
-
 // ─── Timing ───────────────────────────────────────────────────────────────────
-// #define DISPENSE_ON_MS     2000         // How long the dispense GPIO stays HIGH
 constexpr int WIFI_CONNECT_TIMEOUT_MS = 10000;  // Max time to wait for STA connection
 
 // ─── HTTP ─────────────────────────────────────────────────────────────────────
 constexpr int HTTP_PORT = 80;
 
+// ─── Stepper ──────────────────────────────────────────────────────────────────
 constexpr gpio_num_t MOTOR_STEP_PIN = GPIO_NUM_3;
 constexpr gpio_num_t MOTOR_DIRECTION_PIN = GPIO_NUM_1;
 constexpr gpio_num_t MOTOR_ENABLE_PIN = GPIO_NUM_0;
@@ -43,14 +39,14 @@ constexpr gpio_num_t PIN_MS3 = GPIO_NUM_7;
  * 4 => 16th step
  */
 constexpr int microstep_exponent = 3;
-constexpr int parking_offset_rot = 20; //20.0534 degrees
+constexpr int microstep_multiple = pow(2,microstep_exponent);
 
-constexpr int microstep_exponent_adj = microstep_exponent;
-constexpr int microstep_multiple = pow(2,microstep_exponent_adj);
+constexpr int parking_offset_rot = 20; //20.0534 degrees
 
 constexpr float revolutions_to_feed_position = (180-(float)parking_offset_rot)/360;
 constexpr float revolutions_to_nextfeed_position = 0.5;
 constexpr float revolutions_to_standby_position = revolutions_to_nextfeed_position-revolutions_to_feed_position;
 
+// ─── Neopixel ─────────────────────────────────────────────────────────────────
 constexpr gpio_num_t PIN_NEOPIXEL = GPIO_NUM_4;
 constexpr int NEOPIXEL_COUNT = 3; // How many NeoPixels are attached to the Arduino?
