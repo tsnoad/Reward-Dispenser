@@ -4,7 +4,6 @@
 
 
 
-const int parking_offset_rot = 20; //20.0534 degrees
 
 namespace StepperManager {
   SpeedyStepper stepper;
@@ -39,6 +38,7 @@ namespace StepperManager {
     //turn the stepper on for a moment to allow it to get into the correct phase
     //this will cause a jerk, which we want to happen now, and not later when we want to start feeding
     digitalWrite(MOTOR_ENABLE_PIN, LOW);
+    delay(100);
     digitalWrite(MOTOR_ENABLE_PIN, HIGH);
   }
 }

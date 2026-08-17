@@ -65,8 +65,14 @@ void APIHandlers_tick() {
         int microstep_exponent_adj = microstep_exponent;
         int microstep_multiple = pow(2,microstep_exponent_adj);
 
+
+        float revolutions_to_feed_position = (180-(float)parking_offset_rot)/360;
+        float revolutions_to_nextfeed_position = 0.5;
+        float revolutions_to_standby_position = revolutions_to_nextfeed_position-revolutions_to_feed_position;
+
         // stepper.setupMoveToAbsolutePositionInSteps(POS_2);
-        stepper.setupMoveInRevolutions(POS_2*microstep_multiple);
+        // stepper.setupMoveInRevolutions(POS_2*microstep_multiple);
+        stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_standby_position*microstep_multiple);
         _dispenseState = DispenseState::MOVING_TO_POS2;
       }
       break;
@@ -113,8 +119,14 @@ void dispense(WebServer& server) {
   int microstep_exponent_adj = microstep_exponent;
   int microstep_multiple = pow(2,microstep_exponent_adj);
 
+
+  float revolutions_to_feed_position = (180-(float)parking_offset_rot)/360;
+  float revolutions_to_nextfeed_position = 0.5;
+  float revolutions_to_standby_position = revolutions_to_nextfeed_position-revolutions_to_feed_position;
+
   // stepper.setupMoveToAbsolutePositionInSteps(POS_1);
-  stepper.setupMoveInRevolutions(POS_1*microstep_multiple);
+  // stepper.setupMoveInRevolutions(POS_1*microstep_multiple);
+  stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_feed_position*microstep_multiple);
   _dispenseState = DispenseState::MOVING_TO_POS1;
 
   sendJSON(server, 200, R"({"ok":true,"message":"Dispensing"})");

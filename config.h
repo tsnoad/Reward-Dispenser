@@ -40,7 +40,8 @@ const int PIN_MS3 = 7;
  * 3 => 8th step
  * 4 => 16th step
  */
-const int microstep_exponent = 4;
+const int microstep_exponent = 3;
+const int parking_offset_rot = 20; //20.0534 degrees
 
 
 #define PIN_NEOPIXEL 4
