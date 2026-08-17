@@ -17,6 +17,7 @@
 //   - ArduinoJson   >= 7.x  (by Benoit Blanchon)
 
 #include <Arduino.h>
+#include <ESPmDNS.h>
 #include "config.h"
 #include "wifi_manager.h"
 #include "web_server.h"
@@ -41,6 +42,8 @@ void setup() {
   if (!connected) {
     WiFiManager::startAP();
   }
+
+  MDNS.begin(DEVICE_NAME); // mDNS - allows device to be reached at http://DEVICE_NAME.local
 
   // ── HTTP server ────────────────────────────────────────────────────────────
   WebServerManager::begin();
