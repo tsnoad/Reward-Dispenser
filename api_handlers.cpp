@@ -18,11 +18,6 @@ using StepperManager::stepper;
 
 static DispenseState _dispenseState = DispenseState::IDLE;
 
-// static const long POS_1 = 200;
-// static const long POS_2 = 0;
-static const float POS_1 = 0.444;
-static const float POS_2 = 0.5;
-
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
 static void sendJSON(WebServer& server, int code, const String& body) {
@@ -62,16 +57,6 @@ void APIHandlers_tick() {
         pixels.setPixelColor(2, pixels.ColorHSV(64436 * ((current_millis/5 - 2*30) % 360) / 360, 255, 255));
         pixels.show();
       } else {
-        int microstep_exponent_adj = microstep_exponent;
-        int microstep_multiple = pow(2,microstep_exponent_adj);
-
-
-        float revolutions_to_feed_position = (180-(float)parking_offset_rot)/360;
-        float revolutions_to_nextfeed_position = 0.5;
-        float revolutions_to_standby_position = revolutions_to_nextfeed_position-revolutions_to_feed_position;
-
-        // stepper.setupMoveToAbsolutePositionInSteps(POS_2);
-        // stepper.setupMoveInRevolutions(POS_2*microstep_multiple);
         stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_standby_position*microstep_multiple);
         _dispenseState = DispenseState::MOVING_TO_POS2;
       }
@@ -116,16 +101,6 @@ void dispense(WebServer& server) {
   //enable the stepper
   digitalWrite(MOTOR_ENABLE_PIN, LOW);
 
-  int microstep_exponent_adj = microstep_exponent;
-  int microstep_multiple = pow(2,microstep_exponent_adj);
-
-
-  float revolutions_to_feed_position = (180-(float)parking_offset_rot)/360;
-  float revolutions_to_nextfeed_position = 0.5;
-  float revolutions_to_standby_position = revolutions_to_nextfeed_position-revolutions_to_feed_position;
-
-  // stepper.setupMoveToAbsolutePositionInSteps(POS_1);
-  // stepper.setupMoveInRevolutions(POS_1*microstep_multiple);
   stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_feed_position*microstep_multiple);
   _dispenseState = DispenseState::MOVING_TO_POS1;
 

@@ -1,22 +1,24 @@
 #include "stepper_manager.h"
 #include "config.h"  // define PIN_NEOPIXEL and NEOPIXEL_COUNT here
 
-
-
-
+/*
+ * ms_exp | ms_mult  | Mode      | ms_setup_exp  | dec2bin | ms3 | ms2 | ms1
+ *      0 | 2^0 =  1 | Full step |             0 |     000 |   0 |   0 |   0
+ *      1 | 2^1 =  2 | Half step |             1 |     001 |   0 |   0 |   1
+ *      2 | 2^2 =  4 |  Qtr step |             2 |     010 |   0 |   1 |   0
+ *      3 | 2^3 =  8 |  1/8 step |             3 |     011 |   0 |   1 |   1
+ *      4 | 2^4 = 16 | 1/16 step |             7 |     111 |   1 |   1 |   1
+ */
+constexpr int microstep_setup_exponent = microstep_exponent + (microstep_exponent==4?3:0);
+constexpr bool ms3 = ((int)floor(microstep_setup_exponent/4) % 2) == 1;
+constexpr bool ms2 = ((int)floor(microstep_setup_exponent/2) % 2) == 1;
+constexpr bool ms1 = microstep_setup_exponent % 2 ==1 ;
 
 namespace StepperManager {
   SpeedyStepper stepper;
 
   void begin() {
-    //Set up stepper
-    int microstep_exponent_adj = microstep_exponent + (microstep_exponent==4?3:0);
-    int microstep_multiple = pow(2,microstep_exponent_adj);
-
-    bool ms3 = ((int)floor(microstep_exponent_adj/4) % 2) == 1;
-    bool ms2 = ((int)floor(microstep_exponent_adj/2) % 2) == 1;
-    bool ms1 = microstep_exponent_adj % 2 ==1 ;
-
+    //Set up microstepping
     pinMode(PIN_MS3, OUTPUT);
     pinMode(PIN_MS2, OUTPUT);
     pinMode(PIN_MS1, OUTPUT);
@@ -24,6 +26,7 @@ namespace StepperManager {
     digitalWrite(PIN_MS2, (ms2 ? HIGH : LOW));
     digitalWrite(PIN_MS1, (ms1 ? HIGH : LOW));
 
+    //setup the enable pin
     pinMode(MOTOR_ENABLE_PIN, OUTPUT);
     digitalWrite(MOTOR_ENABLE_PIN, HIGH);
 

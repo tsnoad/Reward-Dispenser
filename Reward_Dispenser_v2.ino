@@ -28,25 +28,13 @@ using NeopixelManager::pixels;
 using StepperManager::stepper;
 
 
-
-
-
-
 void setup() {
   Serial.begin(115200);
   delay(200);
   Serial.printf("\n\n=== %s v%s ===\n", DEVICE_NAME, FIRMWARE_VERSION);
 
-
   NeopixelManager::begin();
   StepperManager::begin();
-
-  // ── GPIO init ──────────────────────────────────────────────────────────────
-  // pinMode(PIN_DISPENSE, OUTPUT);
-  // digitalWrite(PIN_DISPENSE, LOW);
-
-
-
 
   // ── Wi-Fi ──────────────────────────────────────────────────────────────────
   bool connected = WiFiManager::connectFromNVS();
