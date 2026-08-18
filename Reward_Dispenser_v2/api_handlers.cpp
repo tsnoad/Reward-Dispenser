@@ -113,7 +113,7 @@ namespace APIHandlers {
   void helloWorld(WebServer& server) {
     Serial.println("[API] POST /api/helloworld");
 
-    if (_dispenseState != DispenseState::IDLE) {
+    if (_helloWorldInProgress) {
       sendJSON(server, 409, R"({"ok":false,"error":"Hello World already in progress"})");
       return;
     }
