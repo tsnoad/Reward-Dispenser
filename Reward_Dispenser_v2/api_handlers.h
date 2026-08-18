@@ -17,6 +17,7 @@ void APIHandlers_tick();
 //   3. Register it in web_server.cpp → registerAPIRoutes()
 
 namespace APIHandlers {
+  DispenseState getDispenseState();
 
   void dispense(WebServer& server);
   void wifiConnect(WebServer& server);

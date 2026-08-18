@@ -77,10 +77,13 @@ void APIHandlers_tick() {
         //were done, disable the stepper
         digitalWrite(MOTOR_ENABLE_PIN, HIGH);
 
-        pixels.fill(pixels.ColorHSV(64436 * 120 / 360, 255, 255));  //Green
-        pixels.show();
+        // pixels.fill(pixels.ColorHSV(64436 * 120 / 360, 255, 255));  //Green
+        // pixels.show();
 
         _dispenseState = DispenseState::IDLE;
+
+
+        NeopixelManager::setMessage(NeopixelManager::Message::NONE);
       }
       break;
   }
@@ -89,6 +92,8 @@ void APIHandlers_tick() {
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 namespace APIHandlers {
+
+  DispenseState getDispenseState() { return _dispenseState; }
 
 void dispense(WebServer& server) {
   Serial.println("[API] POST /api/dispense");
@@ -103,6 +108,8 @@ void dispense(WebServer& server) {
 
   stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_feed_position);
   _dispenseState = DispenseState::MOVING_TO_POS1;
+
+  NeopixelManager::setMessage(NeopixelManager::Message::DISPENSING);
 
   sendJSON(server, 200, R"({"ok":true,"message":"Dispensing"})");
 }

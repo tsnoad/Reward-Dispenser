@@ -423,7 +423,7 @@ void begin() {
 
 void tick() {
   _server.handleClient();
-  APIHandlers_tick();   // handles deferred GPIO off
+  APIHandlers_tick();
 }
 
 } // namespace WebServerManager
