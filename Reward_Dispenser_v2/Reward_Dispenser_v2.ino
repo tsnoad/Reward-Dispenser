@@ -36,16 +36,16 @@ void setup() {
   delay(200);
   Serial.printf("\n\n=== %s v%s ===\n", DEVICE_NAME, FIRMWARE_VERSION);
 
+  // ── Neopixel ───────────────────────────────────────────────────────────────
   NeopixelManager::begin();
-  // NeopixelManager::show_startup_started();
-
   NeopixelManager::setMessage(NeopixelManager::Message::STARTING_UP);
 
+  // ── Stepper -───────────────────────────────────────────────────────────────
   StepperManager::begin();
-
 
   // ── Wi-Fi ──────────────────────────────────────────────────────────────────
   NeopixelManager::setMessage(NeopixelManager::Message::WIFI_CONNECTING);
+
   bool connected = WiFiManager::connectFromNVS();
   if (!connected) {
     WiFiManager::startAP();
@@ -53,14 +53,13 @@ void setup() {
 
   MDNS.begin(DEVICE_NAME); // mDNS - allows device to be reached at http://DEVICE_NAME.local
 
-  // NeopixelManager::show_wifi_success();
-  NeopixelManager::setMessage(NeopixelManager::Message::WIFI_CONNECTED);
-
   // ── HTTP server ────────────────────────────────────────────────────────────
+  NeopixelManager::setMessage(NeopixelManager::Message::WEBSERVER_STARTING);
+
   WebServerManager::begin();
 
   // NeopixelManager::show_webserver_success();
-  NeopixelManager::setMessage(NeopixelManager::Message::NONE);
+  NeopixelManager::setMessage(NeopixelManager::Message::SETUP_COMPLETE);
 
   Serial.println("[Main] Setup complete. Entering loop.");
 }
@@ -78,21 +77,13 @@ void loop() {
 
   if (APIHandlers::getDispenseState() == DispenseState::IDLE) {
   // if (_currentMessage != NeopixelManager::Message::DISPENSING) {  
-    if (WiFiManager::isConnected()) {
+    if (!WiFiManager::isConnected()) {
+      NeopixelManager::setMessage(NeopixelManager::Message::WIFI_DISCONNECTED);
+    } else if (millis() < 10000) {
       NeopixelManager::setMessage(NeopixelManager::Message::WIFI_CONNECTED);
     } else {
-      NeopixelManager::setMessage(NeopixelManager::Message::WIFI_DISCONNECTED);
+      NeopixelManager::setMessage(NeopixelManager::Message::NONE);
     }
   }
   NeopixelManager::tick();
-
-    // unsigned long current_millis = millis();
-    // pixels.setPixelColor(0, pixels.ColorHSV(64436 * ((current_millis/5 - 0*30) % 360) / 360, 255, 255));
-    // pixels.setPixelColor(1, pixels.ColorHSV(64436 * ((current_millis/5 - 1*30) % 360) / 360, 255, 255));
-    // pixels.setPixelColor(2, pixels.ColorHSV(64436 * ((current_millis/5 - 2*30) % 360) / 360, 255, 255));
-
-
-    // // _pixels.fill(_pixels.gamma32(_pixels.ColorHSV(hue, sat, val)));
-
-    // pixels.show();
 }

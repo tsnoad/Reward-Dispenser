@@ -95,77 +95,77 @@ namespace APIHandlers {
 
   DispenseState getDispenseState() { return _dispenseState; }
 
-void dispense(WebServer& server) {
-  Serial.println("[API] POST /api/dispense");
+  void dispense(WebServer& server) {
+    Serial.println("[API] POST /api/dispense");
 
-  if (_dispenseState != DispenseState::IDLE) {
-    sendJSON(server, 409, R"({"ok":false,"error":"Dispense already in progress"})");
-    return;
+    if (_dispenseState != DispenseState::IDLE) {
+      sendJSON(server, 409, R"({"ok":false,"error":"Dispense already in progress"})");
+      return;
+    }
+
+    //enable the stepper
+    digitalWrite(MOTOR_ENABLE_PIN, LOW);
+
+    stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_feed_position);
+    _dispenseState = DispenseState::MOVING_TO_POS1;
+
+    NeopixelManager::setMessage(NeopixelManager::Message::DISPENSING);
+
+    sendJSON(server, 200, R"({"ok":true,"message":"Dispensing"})");
   }
 
-  //enable the stepper
-  digitalWrite(MOTOR_ENABLE_PIN, LOW);
+  void wifiConnect(WebServer& server) {
+    Serial.println("[API] POST /api/wifi/connect");
 
-  stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_feed_position);
-  _dispenseState = DispenseState::MOVING_TO_POS1;
+    JsonDocument doc;
+    if (!parseBody(server, doc)) return;
 
-  NeopixelManager::setMessage(NeopixelManager::Message::DISPENSING);
+    String ssid = doc["ssid"] | "";
+    String pass = doc["password"] | "";
 
-  sendJSON(server, 200, R"({"ok":true,"message":"Dispensing"})");
-}
+    if (ssid.isEmpty()) {
+      sendJSON(server, 400, R"({"ok":false,"error":"ssid required"})");
+      return;
+    }
 
-void wifiConnect(WebServer& server) {
-  Serial.println("[API] POST /api/wifi/connect");
+    WiFiManager::saveCredentials(ssid, pass);
+    sendJSON(server, 200, R"({"ok":true,"message":"Saved. Rebooting…"})");
 
-  JsonDocument doc;
-  if (!parseBody(server, doc)) return;
-
-  String ssid = doc["ssid"] | "";
-  String pass = doc["password"] | "";
-
-  if (ssid.isEmpty()) {
-    sendJSON(server, 400, R"({"ok":false,"error":"ssid required"})");
-    return;
+    delay(500);
+    ESP.restart();
   }
 
-  WiFiManager::saveCredentials(ssid, pass);
-  sendJSON(server, 200, R"({"ok":true,"message":"Saved. Rebooting…"})");
+  void wifiForget(WebServer& server) {
+    Serial.println("[API] POST /api/wifi/forget");
+    WiFiManager::clearCredentials();
+    sendJSON(server, 200, R"({"ok":true,"message":"Credentials cleared. Rebooting…"})");
+    delay(500);
+    ESP.restart();
+  }
 
-  delay(500);
-  ESP.restart();
-}
+  void wifiScan(WebServer& server) {
+    Serial.println("[API] GET /api/wifi/scan");
+    String networks = WiFiManager::scanNetworksJSON();
+    sendJSON(server, 200, "{\"ok\":true,\"networks\":" + networks + "}");
+  }
 
-void wifiForget(WebServer& server) {
-  Serial.println("[API] POST /api/wifi/forget");
-  WiFiManager::clearCredentials();
-  sendJSON(server, 200, R"({"ok":true,"message":"Credentials cleared. Rebooting…"})");
-  delay(500);
-  ESP.restart();
-}
+  void status(WebServer& server) {
+    Serial.println("[API] GET /api/status");
+    String ssid, pass;
+    WiFiManager::loadCredentials(ssid, pass);
 
-void wifiScan(WebServer& server) {
-  Serial.println("[API] GET /api/wifi/scan");
-  String networks = WiFiManager::scanNetworksJSON();
-  sendJSON(server, 200, "{\"ok\":true,\"networks\":" + networks + "}");
-}
+    JsonDocument doc;
+    doc["ok"]                = true;
+    doc["device"]            = DEVICE_NAME;
+    doc["firmware"]          = FIRMWARE_VERSION;
+    doc["wifi"]["connected"] = WiFiManager::isConnected();
+    doc["wifi"]["ip"]        = WiFi.localIP().toString();
+    doc["wifi"]["ssid"]      = ssid;
+    doc["uptime_ms"]         = millis();
 
-void status(WebServer& server) {
-  Serial.println("[API] GET /api/status");
-  String ssid, pass;
-  WiFiManager::loadCredentials(ssid, pass);
-
-  JsonDocument doc;
-  doc["ok"]                = true;
-  doc["device"]            = DEVICE_NAME;
-  doc["firmware"]          = FIRMWARE_VERSION;
-  doc["wifi"]["connected"] = WiFiManager::isConnected();
-  doc["wifi"]["ip"]        = WiFi.localIP().toString();
-  doc["wifi"]["ssid"]      = ssid;
-  doc["uptime_ms"]         = millis();
-
-  String out;
-  serializeJson(doc, out);
-  sendJSON(server, 200, out);
-}
+    String out;
+    serializeJson(doc, out);
+    sendJSON(server, 200, out);
+  }
 
 } // namespace APIHandlers
