@@ -8,7 +8,7 @@ include <components/component_ddc612sa.scad>;
 include <components/component_a4988.scad>;
 include <components/component_stepper_nema17.scad>;
 
-$fn = 144;
+$fn = 36;
 //esp32c3();
 
 screw_type_selftap = 0; //M3 x 8mm countersunk self-tapping screw
@@ -142,7 +142,7 @@ electronics_a4988_loc = electronics_ddc612_loc-(ddc612sa_pcb_dim/2*rotation_matr
 */* make 'Reward Dispenser B.stl' */ rotate([0,180,0]) electronics_holder_top();
 */* make 'Reward Dispenser C.stl' */ body();
 */* make 'Reward Dispenser D.stl' */ rotate([0,180,0]) stepper_mount_plate();
-!/* make 'Reward Dispenser E.stl' */ picking_spool();
+*/* make 'Reward Dispenser E.stl' */ picking_spool();
 */* make 'Reward Dispenser F.stl' */ lid(true);
 
 
@@ -176,20 +176,20 @@ electronics_a4988_loc = electronics_ddc612_loc-(ddc612sa_pcb_dim/2*rotation_matr
 }
 
 //assembled
-*union() {
-    rotate([0,0,180]) base();
+union() {
+    // rotate([0,0,180]) base();
     
     translate([0,0,base_hgt]) {
         body();
-        translate([0,0,hgt1]) lid();
+        // translate([0,0,hgt1]) lid();
     }
 }
 
 //assembled internal parts
-*union() {
-    rotate([0,0,180]) translate([0,0,electronics_holder_hgt1]) electronics_holder_top();
+union() {
+    // rotate([0,0,180]) translate([0,0,electronics_holder_hgt1]) electronics_holder_top();
     translate([0,0,base_hgt]) align_to_diag() {
-        translate(-[0,0,picking_spool_h]) picking_spool();
+        translate(-[0,0,picking_spool_h]) rotate([0,0,-standby_offset]) picking_spool();
         
         translate([0,0,-picking_spool_h-clr_loose]) {
             stepper_mount_plate();
@@ -266,7 +266,11 @@ module picking_spool() {
         }
         
         //alignment mark for standby position
-        translate([0,0,picking_spool_h]) cylinder_bev_co_blind_downwards(w1,bev_m,0,bev_m,0,list_y_to_vec([1,1]*(picking_spool_r-w6)-[10,0])*rotation_matrix(-standby_offset+45));
+        translate([0,0,picking_spool_h]) {
+            // cylinder_bev_co_blind_downwards(w1,bev_m,0,bev_m,0,list_y_to_vec([1,1]*(picking_spool_r-w6)-[10,0])*rotation_matrix(-standby_offset+45));
+            cylinder_bev_co_blind_downwards(w1,bev_m,0,bev_m,0,(vec_to_array([0,picking_spool_r-4,0],3)+[[0,0,0],[-tan(45),-1,0],[tan(45),-1,0]]*2.5)*rotation_matrix(-standby_offset+45));
+            duplicate_radial_by_n(4) cylinder_bev_co_blind_downwards(w1,bev_m,0,bev_m,0,list_y_to_vec([1,1]*(picking_spool_r-4)-[20,0])*rotation_matrix(-standby_offset));
+        }
         
         //cutout for screws to attach stepper flange
         for(it=stepper_flange_screw_trans) cylinder_bev_co_blind_upwards(1.25,stepper_flange_screw_eng_len+1,bev_m,0.5,0,[it]);
@@ -741,6 +745,9 @@ module body() difference() {
 module body_cutout() {
     align_to_diag() {
         cylinder_bev_co_blind_downwards(picking_spool_r,picking_spool_h+clr_loose,bev_m,bev_m,clr_free,$fn=$fn*2);
+
+        //alignment mark for standby position
+        cylinder_bev_co_blind_downwards(w1,bev_m,0,bev_m,0,(vec_to_array([0,picking_spool_r+clr_free+4,0],3)+[[0,0,0],[-tan(45),1,0],[tan(45),1,0]]*2.5)*rotation_matrix(45));
         
         
         translate([0,0,-picking_spool_h-clr_loose]) {

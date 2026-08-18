@@ -42,13 +42,12 @@ static bool parseBody(WebServer& server, JsonDocument& doc) {
 
 void APIHandlers_tick() {
   switch (_dispenseState) {
-
     case DispenseState::IDLE:
       break;
 
     case DispenseState::MOVING_TO_POS1:
       if (!stepper.motionComplete()) {
-        Serial.println(stepper.getCurrentPositionInRevolutions());
+        // Serial.println(stepper.getCurrentPositionInRevolutions());
         stepper.processMovement();
 
         // unsigned long current_millis = millis();
@@ -64,7 +63,7 @@ void APIHandlers_tick() {
 
     case DispenseState::MOVING_TO_POS2:
       if (!stepper.motionComplete()) {
-        Serial.println(stepper.getCurrentPositionInRevolutions());
+        // Serial.println(stepper.getCurrentPositionInRevolutions());
         stepper.processMovement();
 
         // unsigned long current_millis = millis();
