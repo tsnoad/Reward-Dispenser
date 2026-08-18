@@ -8,7 +8,7 @@ include <components/component_ddc612sa.scad>;
 include <components/component_a4988.scad>;
 include <components/component_stepper_nema17.scad>;
 
-$fn = 36;
+$fn = 144;
 //esp32c3();
 
 screw_type_selftap = 0; //M3 x 8mm countersunk self-tapping screw
@@ -75,8 +75,10 @@ base_feet_trans = xyz_to_trans(
 stepper_plate_screw_trans = stepper_screw_trans+outset_to_trans(3+clr_close+w6+clr_loose)+xyz_to_trans([1,-1,0]*(1.25+w6));
 
 picking_spool_r = 55;
-picking_spool_h = 9+1-2*clr_loose;
-picking_hole_r = 14/2+2*clr_loose;
+// picking_spool_h = 9+1-2*clr_loose;
+picking_spool_h = 8+1-2*clr_loose;
+// picking_hole_r = 14/2+2*clr_loose;
+picking_hole_r = 12.5/2+2*clr_loose;
 picking_hole_trans = list_y_to_vec([-1,1]*(picking_spool_r-w6-picking_hole_r));
 
 
@@ -136,26 +138,17 @@ electronics_ddc612_loc = electronics_esp32c3_loc-(esp32c3_pcb_dim/2+[0,4+4,0]+dd
 electronics_a4988_loc = electronics_ddc612_loc-(ddc612sa_pcb_dim/2*rotation_matrix(-90)+[0,4,0]+a4988_pcb_dim/2*rotation_matrix(-90))*ident_xyz_y;
 
 //printables parts
-!/* make 'Reward Dispenser A.stl' */ base();
+*/* make 'Reward Dispenser A.stl' */ base();
 */* make 'Reward Dispenser B.stl' */ rotate([0,180,0]) electronics_holder_top();
 */* make 'Reward Dispenser C.stl' */ body();
 */* make 'Reward Dispenser D.stl' */ rotate([0,180,0]) stepper_mount_plate();
-*/* make 'Reward Dispenser E.stl' */ picking_spool();
+!/* make 'Reward Dispenser E.stl' */ picking_spool();
 */* make 'Reward Dispenser F.stl' */ lid(true);
 
-//blurg
-!union() {
-    intersection() {
-        picking_spool();
-        cylinder_bev(picking_spool_r+clr_free-2*clr_loose,picking_spool_h,2*bev_m,bev_m,$fn=$fn*2);
-    }
-    difference() {
-        cylinder_bev(picking_spool_r+clr_free-2*clr_loose,picking_spool_h,2*bev_m,bev_m,$fn=$fn*2);
-        cylinder_bev_co_through(picking_spool_r+clr_free-2*clr_loose-w4,picking_spool_h,bev_m,bev_m,0,$fn=$fn*2);
-    }
-}
 
-*!intersection() {
+
+//partial lid - useful for showing how the spool works
+*intersection() {
     lid(true);
     translate([0,0,lid_hgt2-25]) cylinder_bev(5,25+lip_hgt,bev_m,bev_m,outer_crn_trans-outset_to_trans(5)-outset_xxyy_to_trans(0,0,1,0)*(2*(100/2+wall_thk)-50));
 }
@@ -193,12 +186,12 @@ electronics_a4988_loc = electronics_ddc612_loc-(ddc612sa_pcb_dim/2*rotation_matr
 }
 
 //assembled internal parts
-union() {
-    *rotate([0,0,180]) translate([0,0,electronics_holder_hgt1]) electronics_holder_top();
+*union() {
+    rotate([0,0,180]) translate([0,0,electronics_holder_hgt1]) electronics_holder_top();
     translate([0,0,base_hgt]) align_to_diag() {
         translate(-[0,0,picking_spool_h]) picking_spool();
         
-        *translate([0,0,-picking_spool_h-clr_loose]) {
+        translate([0,0,-picking_spool_h-clr_loose]) {
             stepper_mount_plate();
         
             translate([0,0,-16-stepper_hgt]) cylinder_bev(2,stepper_hgt,bev_m,bev_m,stepper_crn_trans-outset_to_trans(2));
@@ -212,11 +205,11 @@ module cross_section(enable=true) intersection() {
 }
 
 //cross sections
-union() {
-    *cross_section() rotate([0,0,180]) base();
+*union() {
+    cross_section() rotate([0,0,180]) base();
     
     translate([0,0,base_hgt]) {
-        *cross_section() body();
+        cross_section() body();
         translate([0,0,hgt1]) cross_section() lid();
     }
 }
@@ -242,40 +235,49 @@ union() {
 
 
     
-module picking_spool() difference() {
-    cylinder_bev(picking_spool_r,picking_spool_h,bev_m,bev_m,$fn=$fn*2);
-    
-    //hole to allow access to the stepper plate screws
-    translate([1,0,0]*(sqrt(pow(stepper_plate_screw_trans[0][0],2)+pow(stepper_plate_screw_trans[0][1],2)))) cylinder_bev_co_through(3,picking_spool_h,bev_m,bev_m,clr_close);
-    
-    //cutouts to pick up candy pieces and deliver them to the chute
-    for(it=picking_hole_trans) cylinder_bev_co_through(picking_hole_r,picking_spool_h,bev_m,bev_m,0,[it]);
-    
-    //ramps to make picking up easier
-    for(it=picking_hole_trans) for(i_ext=[0:1/($fn/4):1-1/($fn/4)]) {
-        bev_rad = 5;
+module picking_spool() {
+    picking_spool_r_clr = picking_spool_r+clr_free-2*clr_loose;
+
+    difference() {
+        // cylinder_bev(picking_spool_r,picking_spool_h,bev_m,bev_m,$fn=$fn*2);
+        cylinder_bev(picking_spool_r_clr,picking_spool_h,2*bev_m,bev_m,$fn=$fn*2);
         
-        hull() for(i_int=[i_ext,i_ext+1/($fn/4)]) {
-            ia = -(bev_rad-bev_rad*sin(i_int*90))/(pi*2*abs(it[1]))*360;
-            ih = bev_rad-bev_rad*cos(i_int*90);
+        //hole to allow access to the stepper plate screws
+        translate([1,0,0]*(sqrt(pow(stepper_plate_screw_trans[0][0],2)+pow(stepper_plate_screw_trans[0][1],2)))) cylinder_bev_co_through(3,picking_spool_h,bev_m,bev_m,clr_close);
+        
+        //cutouts to pick up candy pieces and deliver them to the chute
+        for(it=picking_hole_trans) cylinder_bev_co_through(picking_hole_r,picking_spool_h,bev_m,bev_m,0,[it]);
+        
+        //ramps to make picking up easier
+        for(it=picking_hole_trans) for(i_ext=[0:1/($fn/4):1-1/($fn/4)]) {
+            bev_rad = 5;
             
-            rotate([0,0,ia]) translate(it+[0,0,picking_spool_h]) cylinder_bev_co_blind_downwards(picking_hole_r,ih+bev_m,0,0,0);
+            hull() for(i_int=[i_ext,i_ext+1/($fn/4)]) {
+                ia = -(bev_rad-bev_rad*sin(i_int*90))/(pi*2*abs(it[1]))*360;
+                ih = bev_rad-bev_rad*cos(i_int*90);
+                
+                rotate([0,0,ia]) translate(it+[0,0,picking_spool_h]) cylinder_bev_co_blind_downwards(picking_hole_r,ih+bev_m,0,0,0);
+            }
+            hull() for(i_int=[i_ext,i_ext+1/($fn/4)]) {
+                ia = -(bev_rad-bev_rad*sin(i_int*90))/(pi*2*abs(it[1]))*360;
+                
+                rotate([0,0,ia]) translate(it+[0,0,picking_spool_h]) cylinder_bev_co_blind_downwards(picking_hole_r,bev_m,0,bev_m,0);
+            }
         }
-        hull() for(i_int=[i_ext,i_ext+1/($fn/4)]) {
-            ia = -(bev_rad-bev_rad*sin(i_int*90))/(pi*2*abs(it[1]))*360;
-            
-            rotate([0,0,ia]) translate(it+[0,0,picking_spool_h]) cylinder_bev_co_blind_downwards(picking_hole_r,bev_m,0,bev_m,0);
-        }
+        
+        //alignment mark for standby position
+        translate([0,0,picking_spool_h]) cylinder_bev_co_blind_downwards(w1,bev_m,0,bev_m,0,list_y_to_vec([1,1]*(picking_spool_r-w6)-[10,0])*rotation_matrix(-standby_offset+45));
+        
+        //cutout for screws to attach stepper flange
+        for(it=stepper_flange_screw_trans) cylinder_bev_co_blind_upwards(1.25,stepper_flange_screw_eng_len+1,bev_m,0.5,0,[it]);
+        
+        //clearance for stepper shaft
+        cylinder_bev_co_blind_upwards(stepper_shaft_r,-16+stepper_shaft_hgt+1,bev_m,bev_m,clr_free);
     }
-    
-    //alignment mark for standby position
-    translate([0,0,picking_spool_h]) cylinder_bev_co_blind_downwards(w1,bev_m,0,bev_m,0,list_y_to_vec([1,1]*(picking_spool_r-w6)-[10,0])*rotation_matrix(-standby_offset+45));
-    
-    //cutout for screws to attach stepper flange
-    for(it=stepper_flange_screw_trans) cylinder_bev_co_blind_upwards(1.25,stepper_flange_screw_eng_len+1,bev_m,0.5,0,[it]);
-    
-    //clearance for stepper shaft
-    cylinder_bev_co_blind_upwards(stepper_shaft_r,-16+stepper_shaft_hgt+1,bev_m,bev_m,clr_free);
+    difference() {
+        cylinder_bev(picking_spool_r_clr,picking_spool_h,2*bev_m,bev_m,$fn=$fn*2);
+        cylinder_bev_co_through(picking_spool_r_clr-w4,picking_spool_h,bev_m,bev_m,0,$fn=$fn*2);
+    }
 }
 
 
