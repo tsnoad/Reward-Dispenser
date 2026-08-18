@@ -31,12 +31,12 @@ namespace StepperManager {
     digitalWrite(MOTOR_ENABLE_PIN, HIGH);
 
     stepper.connectToPins(MOTOR_STEP_PIN, MOTOR_DIRECTION_PIN);
-    stepper.setStepsPerRevolution(200);
+    stepper.setStepsPerRevolution(200*microstep_multiple);
     stepper.setCurrentPositionInRevolutions(0);
     //stepper.setSpeedInStepsPerSecond(2000);
     //stepper.setAccelerationInStepsPerSecondPerSecond(500);
-    stepper.setSpeedInRevolutionsPerSecond(4);
-    stepper.setAccelerationInRevolutionsPerSecondPerSecond(2);
+    stepper.setSpeedInRevolutionsPerSecond(2);
+    stepper.setAccelerationInRevolutionsPerSecondPerSecond(1000);
 
     //turn the stepper on for a moment to allow it to get into the correct phase
     //this will cause a jerk, which we want to happen now, and not later when we want to start feeding

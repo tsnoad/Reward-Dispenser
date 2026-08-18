@@ -51,13 +51,13 @@ void APIHandlers_tick() {
         Serial.println(stepper.getCurrentPositionInRevolutions());
         stepper.processMovement();
 
-        unsigned long current_millis = millis();
-        pixels.setPixelColor(0, pixels.ColorHSV(64436 * ((current_millis/5 - 0*30) % 360) / 360, 255, 255));
-        pixels.setPixelColor(1, pixels.ColorHSV(64436 * ((current_millis/5 - 1*30) % 360) / 360, 255, 255));
-        pixels.setPixelColor(2, pixels.ColorHSV(64436 * ((current_millis/5 - 2*30) % 360) / 360, 255, 255));
-        pixels.show();
+        // unsigned long current_millis = millis();
+        // pixels.setPixelColor(0, pixels.ColorHSV(64436 * ((current_millis/5 - 0*30) % 360) / 360, 255, 255));
+        // pixels.setPixelColor(1, pixels.ColorHSV(64436 * ((current_millis/5 - 1*30) % 360) / 360, 255, 255));
+        // pixels.setPixelColor(2, pixels.ColorHSV(64436 * ((current_millis/5 - 2*30) % 360) / 360, 255, 255));
+        // pixels.show();
       } else {
-        stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_standby_position*microstep_multiple);
+        stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_standby_position);
         _dispenseState = DispenseState::MOVING_TO_POS2;
       }
       break;
@@ -67,11 +67,11 @@ void APIHandlers_tick() {
         Serial.println(stepper.getCurrentPositionInRevolutions());
         stepper.processMovement();
 
-        unsigned long current_millis = millis();
-        pixels.setPixelColor(0, pixels.ColorHSV(64436 * ((current_millis/5 - 0*30) % 360) / 360, 255, 255));
-        pixels.setPixelColor(1, pixels.ColorHSV(64436 * ((current_millis/5 - 1*30) % 360) / 360, 255, 255));
-        pixels.setPixelColor(2, pixels.ColorHSV(64436 * ((current_millis/5 - 2*30) % 360) / 360, 255, 255));
-        pixels.show();
+        // unsigned long current_millis = millis();
+        // pixels.setPixelColor(0, pixels.ColorHSV(64436 * ((current_millis/5 - 0*30) % 360) / 360, 255, 255));
+        // pixels.setPixelColor(1, pixels.ColorHSV(64436 * ((current_millis/5 - 1*30) % 360) / 360, 255, 255));
+        // pixels.setPixelColor(2, pixels.ColorHSV(64436 * ((current_millis/5 - 2*30) % 360) / 360, 255, 255));
+        // pixels.show();
         
       } else {
         //were done, disable the stepper
@@ -101,7 +101,7 @@ void dispense(WebServer& server) {
   //enable the stepper
   digitalWrite(MOTOR_ENABLE_PIN, LOW);
 
-  stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_feed_position*microstep_multiple);
+  stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_feed_position);
   _dispenseState = DispenseState::MOVING_TO_POS1;
 
   sendJSON(server, 200, R"({"ok":true,"message":"Dispensing"})");

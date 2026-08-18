@@ -21,14 +21,14 @@ constexpr int WIFI_CONNECT_TIMEOUT_MS = 10000;  // Max time to wait for STA conn
 constexpr int HTTP_PORT = 80;
 
 // ─── Stepper ──────────────────────────────────────────────────────────────────
-constexpr gpio_num_t MOTOR_STEP_PIN = GPIO_NUM_3;
-constexpr gpio_num_t MOTOR_DIRECTION_PIN = GPIO_NUM_1;
-constexpr gpio_num_t MOTOR_ENABLE_PIN = GPIO_NUM_0;
+constexpr gpio_num_t MOTOR_DIRECTION_PIN = GPIO_NUM_6;
+constexpr gpio_num_t MOTOR_STEP_PIN      = GPIO_NUM_7;
+constexpr gpio_num_t MOTOR_ENABLE_PIN    = GPIO_NUM_8;
 
 //output pins to configure microstepping
-constexpr gpio_num_t PIN_MS1 = GPIO_NUM_5;
-constexpr gpio_num_t PIN_MS2 = GPIO_NUM_6;
-constexpr gpio_num_t PIN_MS3 = GPIO_NUM_7;
+constexpr gpio_num_t PIN_MS1 = GPIO_NUM_21;
+constexpr gpio_num_t PIN_MS2 = GPIO_NUM_20;
+constexpr gpio_num_t PIN_MS3 = GPIO_NUM_10;
 
 /*
  * Microstepping exponent
@@ -48,5 +48,6 @@ constexpr float revolutions_to_nextfeed_position = 0.5;
 constexpr float revolutions_to_standby_position = revolutions_to_nextfeed_position-revolutions_to_feed_position;
 
 // ─── Neopixel ─────────────────────────────────────────────────────────────────
-constexpr gpio_num_t PIN_NEOPIXEL = GPIO_NUM_4;
+constexpr gpio_num_t PIN_NEOPIXEL = GPIO_NUM_5;
 constexpr int NEOPIXEL_COUNT = 3; // How many NeoPixels are attached to the Arduino?
+constexpr int NEOPIXEL_TICK_MS = 50;
