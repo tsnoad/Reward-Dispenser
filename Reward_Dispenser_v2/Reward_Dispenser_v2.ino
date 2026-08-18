@@ -67,15 +67,7 @@ void setup() {
 void loop() {
   WebServerManager::tick();   // handles HTTP requests + deferred GPIO tasks
 
-
-  // switch (_dispenseState) {
-  //   case DispenseState::IDLE:
-  //   case DispenseState::MOVING_TO_POS1:
-  //   case DispenseState::MOVING_TO_POS2:
-  //     break;
-  // }
-
-  if (APIHandlers::getDispenseState() == DispenseState::IDLE) {
+  if (APIHandlers::getDispenseState() == DispenseState::IDLE && !APIHandlers::getHelloWorldInProgress()) {
   // if (_currentMessage != NeopixelManager::Message::DISPENSING) {  
     if (!WiFiManager::isConnected()) {
       NeopixelManager::setMessage(NeopixelManager::Message::WIFI_DISCONNECTED);

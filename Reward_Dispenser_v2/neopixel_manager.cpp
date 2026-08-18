@@ -49,6 +49,7 @@ namespace NeopixelManager {
         break;
       // These messages are handled by the tick()
       // case Message::DISPENSING:
+      // case Message::HELLOWORLD:
       //   break;
     }
 
@@ -89,6 +90,12 @@ namespace NeopixelManager {
         pixels.setPixelColor(1, pixels.ColorHSV(64436 * ((current_millis/5 - 1*30) % 360) / 360, 255, 255));
         pixels.setPixelColor(2, pixels.ColorHSV(64436 * ((current_millis/5 - 2*30) % 360) / 360, 255, 255));
         // _pixels.fill(_pixels.gamma32(_pixels.ColorHSV(hue, sat, val)));
+        pixels.show();
+        break;
+      case Message::HELLOWORLD:
+        pixels.setPixelColor(0, pixels.ColorHSV(64436 * 120 / 360, 255, phase_brightness(current_millis, 1000, 0*100, 255, 31)));
+        pixels.setPixelColor(1, pixels.ColorHSV(64436 * 120 / 360, 255, phase_brightness(current_millis, 1000, 1*100, 255, 31)));
+        pixels.setPixelColor(2, pixels.ColorHSV(64436 * 120 / 360, 255, phase_brightness(current_millis, 1000, 2*100, 255, 31)));
         pixels.show();
         break;
     }

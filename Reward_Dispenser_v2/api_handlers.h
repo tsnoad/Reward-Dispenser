@@ -18,8 +18,10 @@ void APIHandlers_tick();
 
 namespace APIHandlers {
   DispenseState getDispenseState();
+  bool getHelloWorldInProgress();
 
   void dispense(WebServer& server);
+  void helloWorld(WebServer& server);
   void wifiConnect(WebServer& server);
   void wifiForget(WebServer& server);
   void wifiScan(WebServer& server);

@@ -14,6 +14,7 @@ namespace NeopixelManager {
     WIFI_AP_MODE,
     WIFI_DISCONNECTED,
     DISPENSING,
+    HELLOWORLD,
   };
 
   void begin();

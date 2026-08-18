@@ -18,6 +18,9 @@ using StepperManager::stepper;
 
 static DispenseState _dispenseState = DispenseState::IDLE;
 
+static bool _helloWorldInProgress   = false;
+static uint32_t _helloWorldEndAt    = 0;
+
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
 static void sendJSON(WebServer& server, int code, const String& body) {
@@ -41,6 +44,14 @@ static bool parseBody(WebServer& server, JsonDocument& doc) {
 // ─── Tick (called every loop) ─────────────────────────────────────────────────
 
 void APIHandlers_tick() {
+  if (_helloWorldInProgress && millis() >= _helloWorldEndAt) {
+    _helloWorldInProgress = false;
+
+    if(NeopixelManager::getMessage() == NeopixelManager::Message::HELLOWORLD) NeopixelManager::setMessage(NeopixelManager::Message::NONE);
+
+    Serial.println("[API] Hello World complete.");
+  }
+
   switch (_dispenseState) {
     case DispenseState::IDLE:
       break;
@@ -49,12 +60,6 @@ void APIHandlers_tick() {
       if (!stepper.motionComplete()) {
         // Serial.println(stepper.getCurrentPositionInRevolutions());
         stepper.processMovement();
-
-        // unsigned long current_millis = millis();
-        // pixels.setPixelColor(0, pixels.ColorHSV(64436 * ((current_millis/5 - 0*30) % 360) / 360, 255, 255));
-        // pixels.setPixelColor(1, pixels.ColorHSV(64436 * ((current_millis/5 - 1*30) % 360) / 360, 255, 255));
-        // pixels.setPixelColor(2, pixels.ColorHSV(64436 * ((current_millis/5 - 2*30) % 360) / 360, 255, 255));
-        // pixels.show();
       } else {
         stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_standby_position);
         _dispenseState = DispenseState::MOVING_TO_POS2;
@@ -65,24 +70,16 @@ void APIHandlers_tick() {
       if (!stepper.motionComplete()) {
         // Serial.println(stepper.getCurrentPositionInRevolutions());
         stepper.processMovement();
-
-        // unsigned long current_millis = millis();
-        // pixels.setPixelColor(0, pixels.ColorHSV(64436 * ((current_millis/5 - 0*30) % 360) / 360, 255, 255));
-        // pixels.setPixelColor(1, pixels.ColorHSV(64436 * ((current_millis/5 - 1*30) % 360) / 360, 255, 255));
-        // pixels.setPixelColor(2, pixels.ColorHSV(64436 * ((current_millis/5 - 2*30) % 360) / 360, 255, 255));
-        // pixels.show();
         
       } else {
         //were done, disable the stepper
         digitalWrite(MOTOR_ENABLE_PIN, HIGH);
 
-        // pixels.fill(pixels.ColorHSV(64436 * 120 / 360, 255, 255));  //Green
-        // pixels.show();
-
         _dispenseState = DispenseState::IDLE;
 
+        if(NeopixelManager::getMessage() == NeopixelManager::Message::DISPENSING) NeopixelManager::setMessage(NeopixelManager::Message::NONE);
 
-        NeopixelManager::setMessage(NeopixelManager::Message::NONE);
+        Serial.println("[API] Dispense complete.");
       }
       break;
   }
@@ -91,8 +88,8 @@ void APIHandlers_tick() {
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 namespace APIHandlers {
-
   DispenseState getDispenseState() { return _dispenseState; }
+  bool getHelloWorldInProgress() { return _helloWorldInProgress; }
 
   void dispense(WebServer& server) {
     Serial.println("[API] POST /api/dispense");
@@ -111,6 +108,22 @@ namespace APIHandlers {
     NeopixelManager::setMessage(NeopixelManager::Message::DISPENSING);
 
     sendJSON(server, 200, R"({"ok":true,"message":"Dispensing"})");
+  }
+
+  void helloWorld(WebServer& server) {
+    Serial.println("[API] POST /api/helloworld");
+
+    if (_dispenseState != DispenseState::IDLE) {
+      sendJSON(server, 409, R"({"ok":false,"error":"Hello World already in progress"})");
+      return;
+    }
+
+    _helloWorldInProgress = true;
+    _helloWorldEndAt      = millis() + 4000;
+
+    NeopixelManager::setMessage(NeopixelManager::Message::HELLOWORLD);
+
+    sendJSON(server, 200, R"({"ok":true,"message":"Hello World!"})");
   }
 
   void wifiConnect(WebServer& server) {
