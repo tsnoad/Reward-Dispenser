@@ -23,14 +23,14 @@
 
 | To |  | ESP32 Pin |  | ESP32 Pin |  | To |
 | --: | --- | :-- | --- | --: | --- | :-- |
-|    Neopixel `DIN` | ![Wiring diagram](resources/wire_white.svg)  | `GPIO 5` |  |    5V  | ![Wiring diagram](resources/wire_double_red.svg)   | Neopixel `VIN` <br />**+** Buck Converter `VIN` |
-|       A4988 `Dir` | ![Wiring diagram](resources/wire_blue.svg)   | `GPIO 6` |  |    GND | ![Wiring diagram](resources/wire_double_black.svg) | Neopixel `GND` <br />**+** Buck Converter `GND` |
-|      A4988 `Step` | ![Wiring diagram](resources/wire_yellow.svg) | `GPIO 7` |  |    3V3 | ![Wiring diagram](resources/wire_red.svg)   | A4988 `VDD` |
-|    A4988 `Enable` | ![Wiring diagram](resources/wire_white.svg)  | `GPIO 8` |  | GPIO 4 |                                             | *not connected* |
-| *not connected* |                                              | `GPIO 9` |  | GPIO 3 |                                             | *not connected* |
-|       A4988 `MS1` | ![Wiring diagram](resources/wire_green.svg) | `GPIO 10` |  | GPIO 2 |                                             | *not connected* |
-|       A4988 `MS2` | ![Wiring diagram](resources/wire_green.svg) | `GPIO 20` |  | GPIO 1 |                                             | *not connected* |
-|       A4988 `MS3` | ![Wiring diagram](resources/wire_green.svg) | `GPIO 21` |  | GPIO 0 |                                             | *not connected* |
+|    Neopixel `DIN` | ![Wiring diagram](resources/wire_white.svg)  | `GPIO 5` |  |    `5V`  | ![Wiring diagram](resources/wire_double_red.svg)   | Neopixel `VIN` <br />**+** Buck Converter `VIN` |
+|       A4988 `Dir` | ![Wiring diagram](resources/wire_blue.svg)   | `GPIO 6` |  |    `GND` | ![Wiring diagram](resources/wire_double_black.svg) | Neopixel `GND` <br />**+** Buck Converter `GND` |
+|      A4988 `Step` | ![Wiring diagram](resources/wire_yellow.svg) | `GPIO 7` |  |    `3V3` | ![Wiring diagram](resources/wire_red.svg)   | A4988 `VDD` |
+|    A4988 `Enable` | ![Wiring diagram](resources/wire_white.svg)  | `GPIO 8` |  | `GPIO 4` |                                             | *not connected* |
+| *not connected* |                                              | `GPIO 9` |  | `GPIO 3` |                                             | *not connected* |
+|       A4988 `MS1` | ![Wiring diagram](resources/wire_green.svg) | `GPIO 10` |  | `GPIO 2` |                                             | *not connected* |
+|       A4988 `MS2` | ![Wiring diagram](resources/wire_green.svg) | `GPIO 20` |  | `GPIO 1` |                                             | *not connected* |
+|       A4988 `MS3` | ![Wiring diagram](resources/wire_green.svg) | `GPIO 21` |  | `GPIO 0` |                                             | *not connected* |
 
 
 ### Buck converter connections
@@ -47,14 +47,14 @@
 | --: | --- | :-- | --- | --: | --- | :-- |
 |  ESP32C3 `GPIO 5` | ![Wiring diagram](resources/wire_blue.svg)   | `Dir`    |  |  `GND` |                                              | *not connected* |
 |  ESP32C3 `GPIO 6` | ![Wiring diagram](resources/wire_yellow.svg) | `Step`   |  |  `VDD` | ![Wiring diagram](resources/wire_red.svg)    | ESP32C3 `3V3` |
-|  *Internal pull-up\** |                                              | `Sleep`  |  |   `Out 1A` | ![Wiring diagram](resources/wire_black.svg)  | Stepper Motor `1B` |
-|  *Jump to `Sleep` pin\** |                                              | `Reset`  |  |   `Out 2A` | ![Wiring diagram](resources/wire_white.svg)  | Stepper Motor `1A` |
-| ESP32C3 `GPIO 10` | ![Wiring diagram](resources/wire_green.svg)  | `MS1`    |  |   `Out 2B` | ![Wiring diagram](resources/wire_yellow.svg) | Stepper Motor `2A` |
+|  *Internal pull-up\** |                                              | `Sleep`  |  |   `Out 1B` | ![Wiring diagram](resources/wire_black.svg)  | Stepper Motor `1B` |
+|  *Jump to `Sleep` pin\** |                                              | `Reset`  |  |   `Out 1A` | ![Wiring diagram](resources/wire_white.svg)  | Stepper Motor `1A` |
+| ESP32C3 `GPIO 10` | ![Wiring diagram](resources/wire_green.svg)  | `MS1`    |  |   `Out 2A` | ![Wiring diagram](resources/wire_yellow.svg) | Stepper Motor `2A` |
 | ESP32C3 `GPIO 20` | ![Wiring diagram](resources/wire_green.svg)  | `MS2`    |  |   `Out 2B` | ![Wiring diagram](resources/wire_green.svg)  | Stepper Motor `2B` |
 | ESP32C3 `GPIO 21` | ![Wiring diagram](resources/wire_green.svg)  | `MS3`    |  |  `GND` | ![Wiring diagram](resources/wire_black.svg)  | Buck Converter `GND` |
 |  ESP32C3 `GPIO 8` | ![Wiring diagram](resources/wire_white.svg)  | `Enable` |  | `VMOT` | ![Wiring diagram](resources/wire_red.svg)    | Buck Converter `VOUT` |
 
-\* On most A4988 boards the `Sleep` pin has a pull-up resistor, but the `Reset` pin. By jumping `Reset` to `Sleep`
+\* On most A4988 boards the `Sleep` pin has a pull-up resistor, but the `Reset` pin. By jumping `Reset` to `Sleep` will also be pulled-u
 
 ### Setting the current limit for A4988 stepper motor driver
 
