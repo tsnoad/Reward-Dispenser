@@ -48,6 +48,6 @@ constexpr float revolutions_to_nextfeed_position = 0.5;
 constexpr float revolutions_to_standby_position = revolutions_to_nextfeed_position-revolutions_to_feed_position;
 
 // ─── Neopixel ─────────────────────────────────────────────────────────────────
-constexpr gpio_num_t PIN_NEOPIXEL = GPIO_NUM_5;
+constexpr gpio_num_t PIN_NEOPIXEL_DATA = GPIO_NUM_5;
 constexpr int NEOPIXEL_COUNT = 3; // How many NeoPixels are attached to the Arduino?
 constexpr int NEOPIXEL_TICK_MS = 50;

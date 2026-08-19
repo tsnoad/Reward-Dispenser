@@ -77,5 +77,6 @@ void loop() {
       NeopixelManager::setMessage(NeopixelManager::Message::NONE);
     }
   }
+  
   NeopixelManager::tick();
 }

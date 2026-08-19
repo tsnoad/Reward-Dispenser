@@ -1,11 +1,11 @@
 #include "neopixel_manager.h"
-#include "config.h"  // define PIN_NEOPIXEL and NEOPIXEL_COUNT here
+#include "config.h"
 
 #include "stepper_manager.h"
 using StepperManager::stepper;
 
 namespace NeopixelManager {
-  Adafruit_NeoPixel pixels(NEOPIXEL_COUNT, PIN_NEOPIXEL, NEO_GRB + NEO_KHZ800);
+  Adafruit_NeoPixel pixels(NEOPIXEL_COUNT, PIN_NEOPIXEL_DATA, NEO_GRB + NEO_KHZ800);
 
   static Message _currentMessage = Message::NONE;
 

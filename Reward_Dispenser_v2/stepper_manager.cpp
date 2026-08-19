@@ -1,5 +1,5 @@
 #include "stepper_manager.h"
-#include "config.h"  // define PIN_NEOPIXEL and NEOPIXEL_COUNT here
+#include "config.h"
 
 /*
  * ms_exp | ms_mult  | Mode      | ms_setup_exp  | dec2bin | ms3 | ms2 | ms1
