@@ -1,10 +1,462 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>SmartDevice Flasher</title>
-    </head>
-    <body>
-        <esp-web-install-button manifest="manifest.json"></esp-web-install-button>
-        <script type="module" src="https://unpkg.com/esp-web-tools/dist/web/install-button.js"></script>
-    </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartDevice — Firmware Installer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/esp-web-tools/dist/web/install-button.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            base:     '#0d0d0f',
+            surface:  '#1a1a1f',
+            surface2: '#222228',
+            border:   '#2a2a32',
+            accent:   '#6ee7b7',
+            accent2:  '#34d399',
+            muted:    '#6b7280',
+            faint:    '#374151',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #0d0d0f; }
+
+    /* Step connector line */
+    .step-line { flex: 1; height: 1px; background: #2a2a32; margin: 0 8px; transition: background 0.4s; }
+    .step-line.active { background: #6ee7b7; }
+
+    /* Terminal output */
+    #terminal {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      background: #0d0d0f;
+      border: 1px solid #2a2a32;
+      border-radius: 8px;
+      padding: 16px;
+      height: 220px;
+      overflow-y: auto;
+      color: #9ca3af;
+    }
+    #terminal::-webkit-scrollbar { width: 4px; }
+    #terminal::-webkit-scrollbar-track { background: transparent; }
+    #terminal::-webkit-scrollbar-thumb { background: #2a2a32; border-radius: 2px; }
+
+    .log-info    { color: #9ca3af; }
+    .log-success { color: #6ee7b7; }
+    .log-error   { color: #f87171; }
+    .log-warn    { color: #fbbf24; }
+    .log-dim     { color: #4b5563; }
+
+    /* Progress bar */
+    #progressBar {
+      height: 2px;
+      background: #6ee7b7;
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: 1px;
+    }
+
+    /* Toggle switch */
+    .toggle { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: #2a2a32; border-radius: 20px; transition: 0.2s;
+    }
+    .toggle-slider:before {
+      content: ''; position: absolute;
+      width: 14px; height: 14px; left: 3px; bottom: 3px;
+      background: #6b7280; border-radius: 50%; transition: 0.2s;
+    }
+    .toggle input:checked + .toggle-slider { background: #064e3b; }
+    .toggle input:checked + .toggle-slider:before { transform: translateX(16px); background: #6ee7b7; }
+
+    /* Card active state */
+    .step-card { transition: border-color 0.3s, opacity 0.3s; }
+    .step-card.inactive { opacity: 0.45; pointer-events: none; }
+
+    /* Pulse animation for connecting state */
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .blink { animation: blink 1.2s infinite; }
+
+    /* esp-web-tools button — hide it, we drive it programmatically */
+    esp-web-install-button { display: none; }
+  </style>
+</head>
+<body class="min-h-screen font-sans text-gray-200 flex flex-col items-center px-4 py-12">
+
+  <!-- Wordmark -->
+  <div class="flex items-center gap-3 mb-10">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="14" r="11" stroke="#6ee7b7" stroke-width="1.5" opacity="0.3"/>
+      <circle cx="14" cy="14" r="6"  stroke="#6ee7b7" stroke-width="1.5"/>
+      <circle cx="14" cy="14" r="2"  fill="#6ee7b7"/>
+    </svg>
+    <span class="font-mono text-sm font-medium tracking-widest uppercase text-accent">SmartDevice</span>
+    <span id="versionBadge" class="font-mono text-xs text-muted bg-surface border border-border rounded px-2 py-0.5 ml-1">v—</span>
+  </div>
+
+  <!-- Page heading -->
+  <div class="text-center mb-10 max-w-md">
+    <h1 class="text-2xl font-light text-gray-100 mb-2">Firmware Installer</h1>
+    <p class="text-sm text-muted leading-relaxed">Connect your device via USB to install or update firmware. Works in Chrome and Edge.</p>
+  </div>
+
+  <!-- Step indicator -->
+  <div class="flex items-center w-full max-w-lg mb-8 px-2">
+    <div class="flex flex-col items-center gap-1" id="si-1">
+      <div class="w-7 h-7 rounded-full border border-border flex items-center justify-center font-mono text-xs text-muted transition-all duration-300" id="sc-1">1</div>
+      <span class="text-xs text-muted font-mono">Connect</span>
+    </div>
+    <div class="step-line" id="sl-1"></div>
+    <div class="flex flex-col items-center gap-1" id="si-2">
+      <div class="w-7 h-7 rounded-full border border-border flex items-center justify-center font-mono text-xs text-muted transition-all duration-300" id="sc-2">2</div>
+      <span class="text-xs text-muted font-mono">Configure</span>
+    </div>
+    <div class="step-line" id="sl-2"></div>
+    <div class="flex flex-col items-center gap-1" id="si-3">
+      <div class="w-7 h-7 rounded-full border border-border flex items-center justify-center font-mono text-xs text-muted transition-all duration-300" id="sc-3">3</div>
+      <span class="text-xs text-muted font-mono">Install</span>
+    </div>
+  </div>
+
+  <div class="w-full max-w-lg flex flex-col gap-4">
+
+    <!-- Step 1: Connect -->
+    <div class="step-card bg-surface border border-border rounded-xl p-6" id="card-1">
+      <div class="flex items-center justify-between mb-5">
+        <span class="font-mono text-xs tracking-widest uppercase text-muted">Step 1</span>
+        <div id="deviceStatus" class="flex items-center gap-2 text-xs text-muted font-mono">
+          <span class="w-1.5 h-1.5 rounded-full bg-faint inline-block" id="statusDot"></span>
+          <span id="statusText">No device connected</span>
+        </div>
+      </div>
+
+      <h2 class="text-base font-medium text-gray-100 mb-1">Connect your device</h2>
+      <p class="text-sm text-muted mb-5 leading-relaxed">Plug your ESP32-C3 in via USB, then click Connect. You may be asked to select a port.</p>
+
+      <!-- Device info (hidden until connected) -->
+      <div id="deviceInfo" class="hidden bg-surface2 border border-border rounded-lg p-3 mb-4 font-mono text-xs">
+        <div class="flex justify-between mb-1">
+          <span class="text-muted">Board</span>
+          <span class="text-gray-300" id="deviceBoard">—</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-muted">Port</span>
+          <span class="text-gray-300" id="devicePort">—</span>
+        </div>
+      </div>
+
+      <button id="connectBtn" onclick="handleConnect()"
+        class="w-full flex items-center justify-center gap-2 bg-accent text-base font-medium text-gray-900 rounded-lg px-4 py-3 text-sm transition-opacity hover:opacity-85 active:scale-[0.98]">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M2 8h12M10 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Connect device
+      </button>
+    </div>
+
+    <!-- Step 2: Configure -->
+    <div class="step-card inactive bg-surface border border-border rounded-xl p-6" id="card-2">
+      <div class="mb-5">
+        <span class="font-mono text-xs tracking-widest uppercase text-muted">Step 2</span>
+      </div>
+      <h2 class="text-base font-medium text-gray-100 mb-1">Configure installation</h2>
+      <p class="text-sm text-muted mb-5 leading-relaxed">Choose your options before installing.</p>
+
+      <!-- Board selector -->
+      <div class="mb-4">
+        <label class="block text-xs font-mono tracking-wider uppercase text-muted mb-2">Target board</label>
+        <div class="relative">
+          <select id="boardSelect"
+            class="w-full bg-surface2 border border-border rounded-lg text-sm text-gray-200 px-3 py-2.5 appearance-none outline-none focus:border-accent transition-colors font-mono">
+            <option value="esp32c3">ESP32-C3</option>
+            <option value="esp32">ESP32</option>
+            <option value="esp32s2">ESP32-S2</option>
+            <option value="esp32s3">ESP32-S3</option>
+          </select>
+          <svg class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted" width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="text-xs text-muted mt-1.5" id="autoDetectNote">Board auto-detected from connected device.</p>
+      </div>
+
+      <!-- Erase flash toggle -->
+      <div class="flex items-center justify-between bg-surface2 border border-border rounded-lg px-4 py-3">
+        <div>
+          <div class="text-sm text-gray-200 mb-0.5">Erase flash before installing</div>
+          <div class="text-xs text-muted">Clears all saved settings and Wi-Fi credentials</div>
+        </div>
+        <label class="toggle ml-4 flex-shrink-0">
+          <input type="checkbox" id="eraseToggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Step 3: Install -->
+    <div class="step-card inactive bg-surface border border-border rounded-xl p-6" id="card-3">
+      <div class="mb-5">
+        <span class="font-mono text-xs tracking-widest uppercase text-muted">Step 3</span>
+      </div>
+      <h2 class="text-base font-medium text-gray-100 mb-1">Install firmware</h2>
+      <p class="text-sm text-muted mb-5 leading-relaxed">The installer will write the firmware to your device. Keep it plugged in until complete.</p>
+
+      <!-- Progress bar (hidden until flashing) -->
+      <div id="progressWrap" class="hidden mb-4">
+        <div class="flex justify-between font-mono text-xs text-muted mb-1.5">
+          <span id="progressLabel">Writing firmware…</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="w-full bg-surface2 rounded-full overflow-hidden">
+          <div id="progressBar"></div>
+        </div>
+      </div>
+
+      <!-- Terminal -->
+      <div id="terminal" class="mb-4">
+        <span class="log-dim">— Waiting for installation to start —</span>
+      </div>
+
+      <button id="installBtn" onclick="handleInstall()"
+        class="w-full flex items-center justify-center gap-2 bg-accent text-base font-medium text-gray-900 rounded-lg px-4 py-3 text-sm transition-opacity hover:opacity-85 active:scale-[0.98]">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 2v8M4 7l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Install firmware
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="mt-10 text-center font-mono text-xs text-faint">
+    <a href="https://github.com/yourusername/yourrepo" class="hover:text-muted transition-colors">GitHub</a>
+    <span class="mx-3">·</span>
+    <a href="https://github.com/yourusername/yourrepo/releases" class="hover:text-muted transition-colors">Releases</a>
+  </div>
+
+  <!-- Hidden ESP Web Tools button (driven programmatically) -->
+  <esp-web-install-button id="espInstaller" manifest="manifest.json"></esp-web-install-button>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let _port       = null;
+let _connected  = false;
+let _step       = 1;
+
+// ─── Step management ──────────────────────────────────────────────────────────
+function setStep(n) {
+  _step = n;
+  [1,2,3].forEach(i => {
+    const card = document.getElementById('card-' + i);
+    const sc   = document.getElementById('sc-' + i);
+    if (i < n) {
+      card.classList.add('inactive');
+      sc.classList.remove('border-border','text-muted');
+      sc.classList.add('border-accent','text-accent','bg-accent/10');
+      sc.innerHTML = '✓';
+      if (i < 3) document.getElementById('sl-' + i).classList.add('active');
+    } else if (i === n) {
+      card.classList.remove('inactive');
+      sc.classList.remove('border-border','text-muted');
+      sc.classList.add('border-accent','text-accent');
+    } else {
+      card.classList.add('inactive');
+      sc.classList.remove('border-accent','text-accent');
+      sc.classList.add('border-border','text-muted');
+    }
+  });
+}
+
+// ─── Terminal ─────────────────────────────────────────────────────────────────
+function log(msg, type = 'info') {
+  const t = document.getElementById('terminal');
+  if (t.querySelector('.log-dim') && t.querySelector('.log-dim').textContent.includes('Waiting')) {
+    t.innerHTML = '';
+  }
+  const line = document.createElement('div');
+  line.className = 'log-' + type;
+  const ts = new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  line.innerHTML = '<span class="log-dim">' + ts + '</span>  ' + msg;
+  t.appendChild(line);
+  t.scrollTop = t.scrollHeight;
+}
+
+// ─── Progress ─────────────────────────────────────────────────────────────────
+function setProgress(pct, label) {
+  document.getElementById('progressWrap').classList.remove('hidden');
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  if (label) document.getElementById('progressLabel').textContent = label;
+}
+
+// ─── Connect ──────────────────────────────────────────────────────────────────
+async function handleConnect() {
+  const btn = document.getElementById('connectBtn');
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+
+  if (_connected) {
+    // Disconnect
+    if (_port) { try { await _port.close(); } catch(e){} }
+    _port = null; _connected = false;
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-faint inline-block';
+    txt.textContent = 'No device connected';
+    btn.textContent = 'Connect device';
+    document.getElementById('deviceInfo').classList.add('hidden');
+    document.getElementById('autoDetectNote').textContent = 'Board auto-detected from connected device.';
+    setStep(1);
+    return;
+  }
+
+  try {
+    dot.className = 'w-1.5 h-1.5 rounded-full bg-yellow-400 inline-block blink';
+    txt.textContent = 'Connecting…';
+    btn.disabled = true;
+
+    _port = await navigator.serial.requestPort();
+    await _port.open({ baudRate: 115200 });
+
+    const info = _port.getInfo();
+    _connected = true;
+
+    // Auto-detect board from USB VID/PID
+    const board = detectBoard(info.usbVendorId, info.usbProductId);
+    if (board) {
+      document.getElementById('boardSelect').value = board.value;
+      document.getElementById('autoDetectNote').textContent =
+        '✓ Auto-detected: ' + board.name;
+    } else {
+      document.getElementById('autoDetectNote').textContent =
+        'Could not auto-detect — please select manually.';
+    }
+
+    // Show device info
+    document.getElementById('deviceBoard').textContent = board ? board.name : 'Unknown';
+    document.getElementById('devicePort').textContent  = 'USB ' +
+      (info.usbVendorId  ? '0x' + info.usbVendorId.toString(16).toUpperCase().padStart(4,'0') : '—') + ':' +
+      (info.usbProductId ? '0x' + info.usbProductId.toString(16).toUpperCase().padStart(4,'0') : '—');
+    document.getElementById('deviceInfo').classList.remove('hidden');
+
+    dot.className   = 'w-1.5 h-1.5 rounded-full bg-accent inline-block';
+    txt.textContent = 'Connected';
+    btn.textContent = 'Disconnect';
+    btn.disabled = false;
+
+    setStep(2);
+    setTimeout(() => setStep(2), 100); // ensure configure card is active
+
+  } catch(e) {
+    dot.className   = 'w-1.5 h-1.5 rounded-full bg-faint inline-block';
+    txt.textContent = 'No device connected';
+    btn.disabled = false;
+    if (e.name !== 'NotFoundError') {
+      alert('Could not connect: ' + e.message);
+    }
+  }
+}
+
+// ─── Board detection (USB VID/PID) ────────────────────────────────────────────
+function detectBoard(vid, pid) {
+  const boards = [
+    { vid: 0x303A, pid: 0x1001, value: 'esp32c3', name: 'ESP32-C3' },
+    { vid: 0x303A, pid: 0x0002, value: 'esp32s2', name: 'ESP32-S2' },
+    { vid: 0x303A, pid: 0x0009, value: 'esp32s3', name: 'ESP32-S3' },
+    { vid: 0x10C4, pid: 0xEA60, value: 'esp32',   name: 'ESP32 (CP2102)' },
+    { vid: 0x1A86, pid: 0x7523, value: 'esp32',   name: 'ESP32 (CH340)' },
+  ];
+  return boards.find(b => b.vid === vid && b.pid === pid) || null;
+}
+
+// ─── Install ──────────────────────────────────────────────────────────────────
+async function handleInstall() {
+  if (!_connected) { alert('Please connect a device first.'); return; }
+
+  const erase = document.getElementById('eraseToggle').checked;
+  const btn   = document.getElementById('installBtn');
+
+  btn.disabled   = true;
+  btn.textContent = 'Installing…';
+  setStep(3);
+
+  log('Starting installation…', 'info');
+  if (erase) log('Flash erase enabled — all settings will be cleared', 'warn');
+
+  // Drive esp-web-tools programmatically
+  const installer = document.getElementById('espInstaller');
+
+  // Patch manifest URL with erase param if needed
+  installer.setAttribute('manifest', 'manifest.json' + (erase ? '?erase_first=true' : ''));
+
+  // Listen for esp-web-tools events
+  installer.addEventListener('state-changed', (e) => {
+    const s = e.detail.state;
+    log('State: ' + s, 'info');
+
+    if (s === 'PREPARING')   { setProgress(5,  'Preparing…'); }
+    if (s === 'ERASING')     { setProgress(15, 'Erasing flash…'); log('Erasing flash…', 'warn'); }
+    if (s === 'WRITING')     { setProgress(30, 'Writing firmware…'); }
+    if (s === 'FINISHED')    {
+      setProgress(100, 'Complete');
+      log('Installation complete ✓', 'success');
+      btn.textContent = '✓ Installed';
+      btn.classList.replace('bg-accent', 'bg-emerald-900');
+      btn.classList.add('text-accent');
+      btn.classList.remove('text-gray-900');
+    }
+    if (s === 'ERROR')       {
+      log('Installation failed — check USB connection and try again', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Retry installation';
+    }
+  });
+
+  installer.addEventListener('progress-changed', (e) => {
+    const pct = Math.round(e.detail.progress * 100);
+    setProgress(Math.max(30, pct), 'Writing firmware…');
+    log('Progress: ' + pct + '%', 'dim');
+  });
+
+  // Trigger the install
+  installer.shadowRoot?.querySelector('button')?.click();
+}
+
+// ─── Load version from manifest ───────────────────────────────────────────────
+async function loadVersion() {
+  try {
+    const r = await fetch('manifest.json');
+    const m = await r.json();
+    if (m.version) {
+      document.getElementById('versionBadge').textContent = 'v' + m.version;
+    }
+  } catch(e) {}
+}
+
+// ─── Check Web Serial support ─────────────────────────────────────────────────
+if (!('serial' in navigator)) {
+  document.getElementById('connectBtn').disabled = true;
+  document.getElementById('connectBtn').textContent = 'Web Serial not supported — use Chrome or Edge';
+  document.getElementById('connectBtn').classList.replace('bg-accent','bg-faint');
+  document.getElementById('connectBtn').classList.replace('text-gray-900','text-muted');
+}
+
+loadVersion();
+setStep(1);
+</script>
+</body>
 </html>
