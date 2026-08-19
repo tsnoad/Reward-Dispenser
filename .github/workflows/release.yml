@@ -8,28 +8,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install arduino-cli
-        uses: arduino/setup-arduino-cli@v1
+      - name: Set up Python
+        uses: actions/setup-python@v5
 
-      - name: Install libraries
-        run: |
-          arduino-cli lib install "Adafruit NeoPixel"
-          arduino-cli lib install "ArduinoJson"
-          arduino-cli lib install "SpeedyStepper"
-          sed -i 's/#include <arduino.h>/#include <Arduino.h>/' ~/Arduino/libraries/SpeedyStepper/src/SpeedyStepper.h
+      - name: Install PlatformIO
+        run: pip install platformio
 
       - name: Compile
-        uses: arduino/compile-sketches@v1
-        with:
-          fqbn: esp32:esp32:esp32c3
-          sketch-paths: Reward_Dispenser_v2/
-          cli-compile-flags: |
-            - --output-dir=build/
+        run: platformio run
 
       - name: Create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: build/*.bin
+          files: .pio/build/esp32c3/firmware.bin
