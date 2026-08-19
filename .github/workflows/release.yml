@@ -19,6 +19,12 @@ jobs:
       - name: Install PlatformIO
         run: pip install platformio
 
+      - name: Install dependencies
+        run: platformio pkg install
+
+      - name: Patch SpeedyStepper case sensitivity
+        run: sed -i 's/#include <arduino.h>/#include <Arduino.h>/' .pio/libdeps/esp32c3/SpeedyStepper/src/SpeedyStepper.h
+
       - name: Compile
         run: platformio run
 
