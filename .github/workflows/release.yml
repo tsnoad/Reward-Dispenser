@@ -14,6 +14,12 @@ jobs:
       - name: Install arduino-cli
         uses: arduino/setup-arduino-cli@v1
 
+      - name: Install libraries
+        run: |
+          arduino-cli lib install "Adafruit NeoPixel"
+          arduino-cli lib install "ArduinoJson"
+          arduino-cli lib install "SpeedyStepper"
+
       - name: Compile
         uses: arduino/compile-sketches@v1
         with:
