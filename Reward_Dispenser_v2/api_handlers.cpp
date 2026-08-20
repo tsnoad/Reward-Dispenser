@@ -17,8 +17,6 @@ using NeopixelManager::pixels;
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
-static DispenseState _dispenseState = DispenseState::IDLE;
-
 static bool _helloWorldInProgress   = false;
 static uint32_t _helloWorldEndAt    = 0;
 
@@ -52,61 +50,22 @@ void APIHandlers_tick() {
 
     Serial.println("[API] Hello World complete.");
   }
-
-  switch (_dispenseState) {
-    case DispenseState::IDLE:
-      break;
-
-    case DispenseState::MOVING_TO_POS1:
-      if (!stepper.motionComplete()) {
-        // Serial.println(stepper.getCurrentPositionInRevolutions());
-        stepper.processMovement();
-      } else {
-        stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_standby_position);
-        _dispenseState = DispenseState::MOVING_TO_POS2;
-      }
-      break;
-
-    case DispenseState::MOVING_TO_POS2:
-      if (!stepper.motionComplete()) {
-        // Serial.println(stepper.getCurrentPositionInRevolutions());
-        stepper.processMovement();
-        
-      } else {
-        //were done, disable the stepper
-        digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-
-        _dispenseState = DispenseState::IDLE;
-
-        if(NeopixelManager::getMessage() == NeopixelManager::Message::DISPENSING) NeopixelManager::setMessage(NeopixelManager::Message::NONE);
-
-        Serial.println("[API] Dispense complete.");
-      }
-      break;
-  }
 }
 
 // ─── Handlers ─────────────────────────────────────────────────────────────────
 
 namespace APIHandlers {
-  DispenseState getDispenseState() { return _dispenseState; }
   bool getHelloWorldInProgress() { return _helloWorldInProgress; }
 
   void dispense(WebServer& server) {
     Serial.println("[API] POST /api/dispense");
 
-    if (_dispenseState != DispenseState::IDLE) {
+    if (StepperManager::getStepperDispenseState() != StepperManager::StepperDispenseState::IDLE) {
       sendJSON(server, 409, R"({"ok":false,"error":"Dispense already in progress"})");
       return;
     }
 
-    //enable the stepper
-    digitalWrite(MOTOR_ENABLE_PIN, LOW);
-
-    stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_feed_position);
-    _dispenseState = DispenseState::MOVING_TO_POS1;
-
-    NeopixelManager::setMessage(NeopixelManager::Message::DISPENSING);
+    StepperManager::startStepperDispense();
 
     sendJSON(server, 200, R"({"ok":true,"message":"Dispensing"})");
   }

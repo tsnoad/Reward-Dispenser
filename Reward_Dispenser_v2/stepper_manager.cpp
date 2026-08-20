@@ -1,6 +1,9 @@
 #include "stepper_manager.h"
 #include "config.h"
 
+#include "neopixel_manager.h"
+using NeopixelManager::pixels;
+
 /*
  * ms_exp | ms_mult  | Mode      | ms_setup_exp  | dec2bin | ms3 | ms2 | ms1
  *      0 | 2^0 =  1 | Full step |             0 |     000 |   0 |   0 |   0
@@ -16,6 +19,9 @@ constexpr bool ms1 = microstep_setup_exponent % 2 ==1 ;
 
 namespace StepperManager {
   SpeedyStepper stepper;
+
+  static StepperDispenseState _stepperDispenseState = StepperDispenseState::IDLE;
+  StepperDispenseState getStepperDispenseState() { return _stepperDispenseState; }
 
   void begin() {
     //Set up microstepping
@@ -43,5 +49,56 @@ namespace StepperManager {
     digitalWrite(MOTOR_ENABLE_PIN, LOW);
     delay(100);
     digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+  }
+
+  void tick() {
+    switch (_stepperDispenseState) {
+      case StepperDispenseState::IDLE:
+        break;
+
+      case StepperDispenseState::MOVING_TO_POS1:
+        if (!stepper.motionComplete()) {
+          stepper.processMovement();
+
+        } else {
+          startMoveToStandbyStepperDispense();
+        }
+        break;
+
+      case StepperDispenseState::MOVING_TO_POS2:
+        if (!stepper.motionComplete()) {
+          stepper.processMovement();
+
+        } else {
+          finishStepperDispense();
+        }
+        break;
+    }
+  }
+
+  void startStepperDispense() {
+    //enable the stepper
+    digitalWrite(MOTOR_ENABLE_PIN, LOW);
+
+    stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_feed_position);
+    _stepperDispenseState = StepperDispenseState::MOVING_TO_POS1;
+
+    NeopixelManager::setMessage(NeopixelManager::Message::DISPENSING);
+  }
+
+  void startMoveToStandbyStepperDispense() {
+    stepper.setupMoveInRevolutions(stepper.getCurrentPositionInRevolutions() - revolutions_to_standby_position);
+    _stepperDispenseState = StepperDispenseState::MOVING_TO_POS2;
+  }
+
+  void finishStepperDispense() {
+    //were done, disable the stepper
+    digitalWrite(MOTOR_ENABLE_PIN, HIGH);
+
+    _stepperDispenseState = StepperDispenseState::IDLE;
+
+    if(NeopixelManager::getMessage() == NeopixelManager::Message::DISPENSING) NeopixelManager::setMessage(NeopixelManager::Message::NONE);
+
+    Serial.println("[Stepper] Dispense complete.");
   }
 }

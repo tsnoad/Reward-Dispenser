@@ -1,10 +1,6 @@
 #pragma once
 #include <WebServer.h>
 
-// ─── Dispense state ───────────────────────────────────────────────────────────
-
-enum class DispenseState { IDLE, MOVING_TO_POS1, MOVING_TO_POS2 };
-
 // ─── Tick (called every loop) ─────────────────────────────────────────────────
 // Handles stepper movement between states. Called from web_server.cpp.
 
@@ -17,7 +13,6 @@ void APIHandlers_tick();
 //   3. Register it in web_server.cpp → registerAPIRoutes()
 
 namespace APIHandlers {
-  DispenseState getDispenseState();
   bool getHelloWorldInProgress();
 
   void dispense(WebServer& server);

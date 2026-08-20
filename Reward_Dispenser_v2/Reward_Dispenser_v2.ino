@@ -30,7 +30,6 @@ using StepperManager::stepper;
 #include "neopixel_manager.h"
 using NeopixelManager::pixels;
 
-
 #include "api_handlers.h"
 
 
@@ -68,10 +67,11 @@ void setup() {
 }
 
 void loop() {
+  StepperManager::tick();
   WebServerManager::tick();   // handles HTTP requests + deferred GPIO tasks
   TimerManager::tick();
 
-  if (APIHandlers::getDispenseState() == DispenseState::IDLE && !APIHandlers::getHelloWorldInProgress() && !TimerManager::getTimerInProgress()) {
+  if (StepperManager::getStepperDispenseState() == StepperManager::StepperDispenseState::IDLE && !APIHandlers::getHelloWorldInProgress() && !TimerManager::getTimerInProgress()) {
   // if (_currentMessage != NeopixelManager::Message::DISPENSING) {  
     if (!WiFiManager::isConnected()) {
       NeopixelManager::setMessage(NeopixelManager::Message::WIFI_DISCONNECTED);
