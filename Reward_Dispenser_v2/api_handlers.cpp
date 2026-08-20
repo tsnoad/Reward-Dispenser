@@ -7,12 +7,13 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
 
+#include "stepper_manager.h"
+using StepperManager::stepper;
+
+#include "timer_manager.h"
 
 #include "neopixel_manager.h"
 using NeopixelManager::pixels;
-
-#include "stepper_manager.h"
-using StepperManager::stepper;
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -124,6 +125,21 @@ namespace APIHandlers {
     NeopixelManager::setMessage(NeopixelManager::Message::HELLOWORLD);
 
     sendJSON(server, 200, R"({"ok":true,"message":"Hello World!"})");
+  }
+
+  void timerStart(WebServer& server) {
+    Serial.println("[API] POST /api/timer/start");
+
+    if (TimerManager::getTimerInProgress()) {
+      sendJSON(server, 409, R"({"ok":false,"error":"Timer already in progress"})");
+      return;
+    }
+
+    TimerManager::startTimer();
+
+    NeopixelManager::setMessage(NeopixelManager::Message::TIMER_IN_PROGRESS);
+
+    sendJSON(server, 200, R"({"ok":true,"message":"Timer Started"})");
   }
 
   void wifiConnect(WebServer& server) {

@@ -22,11 +22,14 @@
 #include "wifi_manager.h"
 #include "web_server.h"
 
+#include "stepper_manager.h"
+using StepperManager::stepper;
+
+#include "timer_manager.h"
+
 #include "neopixel_manager.h"
 using NeopixelManager::pixels;
 
-#include "stepper_manager.h"
-using StepperManager::stepper;
 
 #include "api_handlers.h"
 
@@ -66,8 +69,9 @@ void setup() {
 
 void loop() {
   WebServerManager::tick();   // handles HTTP requests + deferred GPIO tasks
+  TimerManager::tick();
 
-  if (APIHandlers::getDispenseState() == DispenseState::IDLE && !APIHandlers::getHelloWorldInProgress()) {
+  if (APIHandlers::getDispenseState() == DispenseState::IDLE && !APIHandlers::getHelloWorldInProgress() && !TimerManager::getTimerInProgress()) {
   // if (_currentMessage != NeopixelManager::Message::DISPENSING) {  
     if (!WiFiManager::isConnected()) {
       NeopixelManager::setMessage(NeopixelManager::Message::WIFI_DISCONNECTED);

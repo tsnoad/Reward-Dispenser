@@ -335,6 +335,10 @@ static const char PAGE_MAIN[] PROGMEM = R"rawhtml(
     <span class="spinner"></span>
     <span class="btn-label">Hello World</span>
   </button>
+  <button class="btn btn-primary" onclick="doStartTimer(this)">
+    <span class="spinner"></span>
+    <span class="btn-label">Start Timer</span>
+  </button>
 </div>
 
 <div class="card">
@@ -364,6 +368,12 @@ async function doDispense(btn) {
 async function doHelloWorld(btn) {
   btn.classList.add('loading');
   const d = await api('/api/helloworld','POST');
+  btn.classList.remove('loading');
+  toast(d.ok ? d.message : (d.error||'Error'), d.ok);
+}
+async function doStartTimer(btn) {
+  btn.classList.add('loading');
+  const d = await api('/api/timer/start','POST');
   btn.classList.remove('loading');
   toast(d.ok ? d.message : (d.error||'Error'), d.ok);
 }
@@ -401,6 +411,7 @@ static void sendPage(const char* title, const char* content) {
 static void registerAPIRoutes() {
   _server.on("/api/dispense",      HTTP_POST, []{ APIHandlers::dispense(_server);    });
   _server.on("/api/helloworld",    HTTP_POST, []{ APIHandlers::helloWorld(_server);    });
+  _server.on("/api/timer/start",   HTTP_POST, []{ APIHandlers::timerStart(_server);    });
   _server.on("/api/wifi/connect",  HTTP_POST, []{ APIHandlers::wifiConnect(_server); });
   _server.on("/api/wifi/forget",   HTTP_POST, []{ APIHandlers::wifiForget(_server);  });
   _server.on("/api/wifi/scan",     HTTP_GET,  []{ APIHandlers::wifiScan(_server);    });

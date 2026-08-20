@@ -22,6 +22,7 @@ namespace APIHandlers {
 
   void dispense(WebServer& server);
   void helloWorld(WebServer& server);
+  void timerStart(WebServer& server);
   void wifiConnect(WebServer& server);
   void wifiForget(WebServer& server);
   void wifiScan(WebServer& server);

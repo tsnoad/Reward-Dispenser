@@ -15,6 +15,7 @@ namespace NeopixelManager {
     WIFI_DISCONNECTED,
     DISPENSING,
     HELLOWORLD,
+    TIMER_IN_PROGRESS,
   };
 
   void begin();
