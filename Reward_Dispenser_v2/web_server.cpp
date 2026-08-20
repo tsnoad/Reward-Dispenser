@@ -107,6 +107,8 @@ static const char HTML_STYLE[] PROGMEM = R"rawhtml(</title>
     appearance: none;
   }
   input:focus, select:focus { border-color: var(--accent); }
+  .btn-row { display: flex; gap: 10px; align-items: stretch; }
+  .btn-row .btn { flex: 1; }
   .btn {
     display: inline-flex;
     align-items: center;
@@ -140,7 +142,7 @@ static const char HTML_STYLE[] PROGMEM = R"rawhtml(</title>
     border: 1px solid #3a2020;
   }
   .btn-danger:hover { background: #2a1515; }
-  .btn + .btn { margin-top: 10px; }
+  .btn + .btn, .btn + .btn-stack-item { margin-top: 10px; }
   .status-pill {
     display: inline-flex;
     align-items: center;
@@ -335,11 +337,81 @@ static const char PAGE_MAIN[] PROGMEM = R"rawhtml(
     <span class="spinner"></span>
     <span class="btn-label">Hello World</span>
   </button>
-  <button class="btn btn-primary" onclick="doStartTimer(this)">
-    <span class="spinner"></span>
-    <span class="btn-label">Start Timer</span>
-  </button>
+
+  <div id="timerContainer" class="btn-stack-item">
+    <div id="timerButtons" class="btn-row">
+      <button class="btn btn-primary" onclick="doStartTimer(this, 600000)">
+        <span class="spinner"></span>
+        <span class="btn-label">Start 10m</span>
+      </button>
+      <button class="btn btn-primary" onclick="doStartTimer(this, 1200000)">
+        <span class="spinner"></span>
+        <span class="btn-label">Start 20m</span>
+      </button>
+    </div>
+    <div id="timerDisplay" style="display:none" class="btn btn-ghost">
+      <span id="timerCountdown">--:--</span>
+    </div>
+  </div>
 </div>
+
+<script>
+let _timerInterval  = null;
+let _timerSyncInterval = null;
+let _msRemaining    = 0;
+
+function formatTime(ms) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+  const s = (totalSec % 60).toString().padStart(2, '0');
+  return m + ':' + s;
+}
+
+function startClientTimer(msRemaining) {
+  _msRemaining = msRemaining;
+
+  document.getElementById('timerButtons').style.display  = 'none';
+  document.getElementById('timerDisplay').style.display  = '';
+  document.getElementById('timerCountdown').textContent  = formatTime(_msRemaining);
+
+  clearInterval(_timerInterval);
+  _timerInterval = setInterval(() => {
+    _msRemaining -= 1000;
+    document.getElementById('timerCountdown').textContent = formatTime(_msRemaining);
+    if (_msRemaining <= 0) stopClientTimer();
+  }, 1000);
+
+  clearInterval(_timerSyncInterval);
+  _timerSyncInterval = setInterval(syncTimerStatus, 10000);
+}
+
+function stopClientTimer() {
+  clearInterval(_timerInterval);
+  clearInterval(_timerSyncInterval);
+  _timerInterval     = null;
+  _timerSyncInterval = null;
+  _msRemaining       = 0;
+
+  document.getElementById('timerButtons').style.display  = '';
+  document.getElementById('timerDisplay').style.display  = 'none';
+}
+
+async function syncTimerStatus() {
+  const d = await api('/api/timer/status', 'GET');
+  if (!d.ok) return;
+  if (!d.inProgress) {
+    stopClientTimer();
+  } else {
+    // Correct any drift
+    _msRemaining = d.msRemaining;
+  }
+}
+
+// Check timer status on page load in case timer is already running
+syncTimerStatus().then(() => {
+  if (_msRemaining > 0) startClientTimer(_msRemaining);
+});
+</script>
 
 <div class="card">
   <div class="card-title">Network</div>
@@ -371,11 +443,12 @@ async function doHelloWorld(btn) {
   btn.classList.remove('loading');
   toast(d.ok ? d.message : (d.error||'Error'), d.ok);
 }
-async function doStartTimer(btn) {
+async function doStartTimer(btn, durationMs) {
   btn.classList.add('loading');
-  const d = await api('/api/timer/start','POST');
+  const d = await api('/api/timer/start', 'POST', { durationMs });
   btn.classList.remove('loading');
-  toast(d.ok ? d.message : (d.error||'Error'), d.ok);
+  if (d.ok) startClientTimer(d.msRemaining);
+  else toast(d.error || 'Failed', false);
 }
 async function doForget(btn) {
   if (!confirm('This will disconnect the device from Wi-Fi and restart setup mode.')) return;
@@ -411,6 +484,7 @@ static void sendPage(const char* title, const char* content) {
 static void registerAPIRoutes() {
   _server.on("/api/dispense",      HTTP_POST, []{ APIHandlers::dispense(_server);    });
   _server.on("/api/helloworld",    HTTP_POST, []{ APIHandlers::helloWorld(_server);    });
+  _server.on("/api/timer/status",  HTTP_GET,  []{ APIHandlers::timerStatus(_server); });
   _server.on("/api/timer/start",   HTTP_POST, []{ APIHandlers::timerStart(_server);    });
   _server.on("/api/wifi/connect",  HTTP_POST, []{ APIHandlers::wifiConnect(_server); });
   _server.on("/api/wifi/forget",   HTTP_POST, []{ APIHandlers::wifiForget(_server);  });

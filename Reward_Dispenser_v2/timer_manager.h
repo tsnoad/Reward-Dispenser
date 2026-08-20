@@ -15,13 +15,13 @@ namespace TimerManager {
 //   };
 
 //   void begin();
-  void startTimer();
+  void startTimer(int durationMs);
 //   void pauseTimer();
 //   void resumeTimer();
 //   void cancelTimer();
 
-  int getTimerInProgress();
-  int getTimerSecondsRemaining();
+  bool getTimerInProgress();
+  int getTimerMsRemaining();
 
   void tick();
 

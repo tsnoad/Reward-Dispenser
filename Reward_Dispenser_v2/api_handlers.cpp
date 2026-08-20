@@ -127,6 +127,19 @@ namespace APIHandlers {
     sendJSON(server, 200, R"({"ok":true,"message":"Hello World!"})");
   }
 
+  void timerStatus(WebServer& server) {
+    Serial.println("[API] POST /api/timer/status");
+
+    JsonDocument doc;
+    doc["ok"]          = true;
+    doc["inProgress"]  = TimerManager::getTimerInProgress();
+    doc["msRemaining"] = TimerManager::getTimerMsRemaining();
+    String out;
+    serializeJson(doc, out);
+
+    sendJSON(server, 200, out);
+  }
+
   void timerStart(WebServer& server) {
     Serial.println("[API] POST /api/timer/start");
 
@@ -135,11 +148,32 @@ namespace APIHandlers {
       return;
     }
 
-    TimerManager::startTimer();
+    JsonDocument doc;
+    if (!parseBody(server, doc)) return;
+
+    int durationMs = doc["durationMs"] | 0;
+
+    if (durationMs <= 0) {
+      sendJSON(server, 400, R"({"ok":false,"error":"durationMs must be a positive integer"})");
+      return;
+    }
+    if (durationMs > 3600000) {
+      sendJSON(server, 400, R"({"ok":false,"error":"durationMs must be 60 minutes or less"})");
+      return;
+    }
+
+    TimerManager::startTimer(durationMs);
 
     NeopixelManager::setMessage(NeopixelManager::Message::TIMER_IN_PROGRESS);
 
-    sendJSON(server, 200, R"({"ok":true,"message":"Timer Started"})");
+    // sendJSON(server, 200, R"({"ok":true,"message":"Timer Started"})");
+
+    JsonDocument resp;
+    resp["ok"]          = true;
+    resp["msRemaining"] = TimerManager::getTimerMsRemaining();
+    String out;
+    serializeJson(resp, out);
+    sendJSON(server, 200, out);
   }
 
   void wifiConnect(WebServer& server) {
