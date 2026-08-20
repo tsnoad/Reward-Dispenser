@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+#include "stepper_manager.h"
+
 namespace TimerManager {
   static unsigned long _timerEndAt    = 0;
 
@@ -16,6 +18,8 @@ namespace TimerManager {
   void tick() {
     if (getTimerInProgress() && getTimerMsRemaining() <= 0) {
         _timerEndAt = 0;
+
+        StepperManager::startStepperDispense();
 
         Serial.println("[Timer] Timer is complete");
     }
