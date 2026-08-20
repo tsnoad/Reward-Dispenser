@@ -71,8 +71,16 @@ void loop() {
   WebServerManager::tick();   // handles HTTP requests + deferred GPIO tasks
   TimerManager::tick();
 
-  if (StepperManager::getStepperDispenseState() == StepperManager::StepperDispenseState::IDLE && !APIHandlers::getHelloWorldInProgress() && !TimerManager::getTimerInProgress()) {
-  // if (_currentMessage != NeopixelManager::Message::DISPENSING) {  
+  if (StepperManager::getStepperDispenseState() != StepperManager::StepperDispenseState::IDLE) {
+    if(NeopixelManager::getMessage() != NeopixelManager::Message::DISPENSING) NeopixelManager::setMessage(NeopixelManager::Message::DISPENSING);
+
+  } else if (APIHandlers::getHelloWorldInProgress()) {
+    if(NeopixelManager::getMessage() != NeopixelManager::Message::HELLOWORLD) NeopixelManager::setMessage(NeopixelManager::Message::HELLOWORLD);
+
+  } else if (TimerManager::getTimerInProgress()) {
+    if(NeopixelManager::getMessage() != NeopixelManager::Message::TIMER_IN_PROGRESS) NeopixelManager::setMessage(NeopixelManager::Message::TIMER_IN_PROGRESS);
+    
+  } else {
     if (!WiFiManager::isConnected()) {
       NeopixelManager::setMessage(NeopixelManager::Message::WIFI_DISCONNECTED);
     } else if (millis() < 10000) {
