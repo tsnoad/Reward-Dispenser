@@ -107,6 +107,51 @@ static const char HTML_STYLE[] PROGMEM = R"rawhtml(</title>
     appearance: none;
   }
   input:focus, select:focus { border-color: var(--accent); }
+  .timer-face {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 8px 0 24px;
+  }
+  .timer-ring {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--surface2);
+    box-shadow: inset 0 2px 12px rgba(0,0,0,0.4), 0 0 0 6px var(--surface), 0 0 0 7px var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    transition: box-shadow 0.4s, border-color 0.4s;
+  }
+  .timer-ring.active {
+    border-color: var(--accent);
+    box-shadow: inset 0 2px 12px rgba(0,0,0,0.4), 0 0 0 6px var(--surface), 0 0 0 7px var(--accent), 0 0 20px rgba(232,160,74,0.15);
+  }
+  .timer-digits {
+    font-family: 'DM Mono', monospace;
+    font-size: 42px;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    transition: color 0.4s;
+  }
+  .timer-ring.active .timer-digits {
+    color: var(--text);
+  }
+  .timer-status {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    transition: color 0.4s;
+  }
+  .timer-status.active {
+    color: var(--accent);
+  }
   .btn-row { display: flex; gap: 10px; align-items: stretch; }
   .btn-row .btn { flex: 1; }
   .btn {
@@ -142,7 +187,7 @@ static const char HTML_STYLE[] PROGMEM = R"rawhtml(</title>
     border: 1px solid #3a2020;
   }
   .btn-danger:hover { background: #2a1515; }
-  .btn + .btn, .btn + .btn-stack-item { margin-top: 10px; }
+  .btn + .btn:not(.btn-row .btn), .btn + .btn-stack-item { margin-top: 10px; }
   .status-pill {
     display: inline-flex;
     align-items: center;
@@ -328,6 +373,28 @@ static const char PAGE_MAIN[] PROGMEM = R"rawhtml(
 </div>
 
 <div class="card">
+  <div class="card-title">Timer</div>
+
+  <div class="timer-face">
+    <div class="timer-ring">
+      <div id="timerDisplay" class="timer-digits">--:--</div>
+    </div>
+    <div id="timerStatus" class="timer-status">standby</div>
+  </div>
+
+  <div id="timerButtons" class="btn-row">
+    <button class="btn btn-primary" onclick="doStartTimer(this, 600000)">
+      <span class="spinner"></span>
+      <span class="btn-label">Start 10m</span>
+    </button>
+    <button class="btn btn-primary" onclick="doStartTimer(this, 1200000)">
+      <span class="spinner"></span>
+      <span class="btn-label">Start 20m</span>
+    </button>
+  </div>
+</div>
+
+<div class="card">
   <div class="card-title">Controls</div>
   <button class="btn btn-primary" onclick="doDispense(this)">
     <span class="spinner"></span>
@@ -337,22 +404,6 @@ static const char PAGE_MAIN[] PROGMEM = R"rawhtml(
     <span class="spinner"></span>
     <span class="btn-label">Hello World</span>
   </button>
-
-  <div id="timerContainer" class="btn-stack-item">
-    <div id="timerButtons" class="btn-row">
-      <button class="btn btn-primary" onclick="doStartTimer(this, 600000)">
-        <span class="spinner"></span>
-        <span class="btn-label">Start 10m</span>
-      </button>
-      <button class="btn btn-primary" onclick="doStartTimer(this, 1200000)">
-        <span class="spinner"></span>
-        <span class="btn-label">Start 20m</span>
-      </button>
-    </div>
-    <div id="timerDisplay" style="display:none" class="btn btn-ghost">
-      <span id="timerCountdown">--:--</span>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -371,13 +422,15 @@ function startClientTimer(msRemaining) {
   _msRemaining = msRemaining;
 
   document.getElementById('timerButtons').style.display  = 'none';
-  document.getElementById('timerDisplay').style.display  = '';
-  document.getElementById('timerCountdown').textContent  = formatTime(_msRemaining);
+  document.getElementById('timerDisplay').textContent    = formatTime(_msRemaining);
+  document.getElementById('timerStatus').textContent     = 'running';
+  document.querySelector('.timer-ring').classList.add('active');
+  document.getElementById('timerStatus').classList.add('active');
 
   clearInterval(_timerInterval);
   _timerInterval = setInterval(() => {
     _msRemaining -= 1000;
-    document.getElementById('timerCountdown').textContent = formatTime(_msRemaining);
+    document.getElementById('timerDisplay').textContent = formatTime(_msRemaining);
     if (_msRemaining <= 0) stopClientTimer();
   }, 1000);
 
@@ -393,7 +446,10 @@ function stopClientTimer() {
   _msRemaining       = 0;
 
   document.getElementById('timerButtons').style.display  = '';
-  document.getElementById('timerDisplay').style.display  = 'none';
+  document.getElementById('timerDisplay').textContent    = '--:--';
+  document.getElementById('timerStatus').textContent     = 'standby';
+  document.querySelector('.timer-ring').classList.remove('active');
+  document.getElementById('timerStatus').classList.remove('active');
 }
 
 async function syncTimerStatus() {
